@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProductDetailsPage } from './ProductDetailsPage.jsx';
 import { ProductsPage } from './ProductsPage.jsx';
+import { TestAppProviders } from '../test/TestAppProviders.jsx';
 
 const category = {
   id: '10000000-0000-4000-8000-000000000002',
@@ -61,9 +62,11 @@ describe('catalog pages', () => {
 
     render(
       <MemoryRouter initialEntries={['/products?category=flowers']}>
-        <Routes>
-          <Route path="/products" element={<ProductsPage />} />
-        </Routes>
+        <TestAppProviders>
+          <Routes>
+            <Route path="/products" element={<ProductsPage />} />
+          </Routes>
+        </TestAppProviders>
       </MemoryRouter>,
     );
 
@@ -77,9 +80,11 @@ describe('catalog pages', () => {
 
     render(
       <MemoryRouter initialEntries={[`/products/${product.id}`]}>
-        <Routes>
-          <Route path="/products/:productId" element={<ProductDetailsPage />} />
-        </Routes>
+        <TestAppProviders>
+          <Routes>
+            <Route path="/products/:productId" element={<ProductDetailsPage />} />
+          </Routes>
+        </TestAppProviders>
       </MemoryRouter>,
     );
 

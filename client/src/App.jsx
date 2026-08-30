@@ -4,6 +4,7 @@ import { AdminRoute, ProtectedRoute } from './components/RouteGuards.jsx';
 import { StorefrontLayout } from './components/StorefrontLayout.jsx';
 import { AccountPage } from './pages/AccountPage.jsx';
 import { AdminHomePage } from './pages/AdminHomePage.jsx';
+import { CartPage } from './pages/CartPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="products/:productId" element={<ProductDetailsPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
+          <Route path="cart" element={<CartPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

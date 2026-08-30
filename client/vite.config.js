@@ -16,6 +16,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     pool: 'forks',
+    fileParallelism: false,
     setupFiles: './src/test/setup.js',
   },
 });

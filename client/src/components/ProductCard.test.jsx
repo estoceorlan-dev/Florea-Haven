@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import { TestAppProviders } from '../test/TestAppProviders.jsx';
 import { ProductCard } from './ProductCard.jsx';
 
 const product = {
@@ -16,7 +17,9 @@ describe('ProductCard', () => {
   it('renders catalog information and a detail link', () => {
     render(
       <MemoryRouter>
-        <ProductCard product={product} />
+        <TestAppProviders>
+          <ProductCard product={product} />
+        </TestAppProviders>
       </MemoryRouter>,
     );
 

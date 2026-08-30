@@ -1,6 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../utils/currency.js';
+import { AddToCartButton } from './AddToCartButton.jsx';
 import { ProductImage } from './ProductImage.jsx';
 
 export function ProductCard({ product }) {
@@ -41,6 +42,11 @@ export function ProductCard({ product }) {
             {formatCurrency(product.price)}
           </p>
         </div>
+        <AddToCartButton
+          product={product}
+          compact
+          className="mt-4 inline-flex min-h-9 items-center gap-1.5 border-b border-evergreen/25 pb-1 text-[0.66rem] font-bold uppercase tracking-[0.1em] text-evergreen transition hover:border-evergreen"
+        />
       </div>
     </article>
   );

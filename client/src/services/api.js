@@ -70,3 +70,12 @@ export const authApi = {
   logout: () => jsonRequest('/api/auth/logout', 'POST'),
   getMe: () => request('/api/auth/me'),
 };
+
+export const cartApi = {
+  getCart: () => request('/api/cart'),
+  addItem: (productId, quantity = 1) =>
+    jsonRequest('/api/cart/items', 'POST', { productId, quantity }),
+  updateItem: (itemId, quantity) =>
+    jsonRequest(`/api/cart/items/${itemId}`, 'PUT', { quantity }),
+  removeItem: (itemId) => request(`/api/cart/items/${itemId}`, { method: 'DELETE' }),
+};

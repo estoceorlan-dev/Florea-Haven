@@ -1,6 +1,7 @@
-import { ArrowLeft, ArrowRight, Leaf, PackageCheck, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Leaf, PackageCheck, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
+import { AddToCartButton } from '../components/AddToCartButton.jsx';
 import { ProductImage } from '../components/ProductImage.jsx';
 import { useAsync } from '../hooks/useAsync.js';
 import { catalogApi } from '../services/api.js';
@@ -87,17 +88,11 @@ export function ProductDetailsPage() {
             </div>
 
             <div className="mt-9 border border-evergreen/15 bg-white p-5">
-              <p className="text-sm font-semibold text-evergreen">
-                Shopping arrives in the next build phase.
+              <AddToCartButton product={item} className="button-primary w-full" />
+              <p className="mt-3 text-center text-xs leading-5 text-ink/50">
+                Your cart is saved securely to your account. Checkout arrives in Phase
+                5.
               </p>
-              <p className="mt-1 text-sm leading-6 text-ink/55">
-                The catalog is ready to explore now. Persistent carts and secure
-                checkout are intentionally added after authentication.
-              </p>
-              <Link className="button-primary mt-5 w-full" to="/products">
-                Continue exploring
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
             </div>
 
             <div className="mt-9 grid gap-4 border-t border-evergreen/12 pt-7 sm:grid-cols-3">

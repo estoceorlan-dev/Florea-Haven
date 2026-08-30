@@ -3,7 +3,7 @@ import { jwtVerify, SignJWT } from 'jose';
 import { env } from '../config/env.js';
 
 const secretKey = new TextEncoder().encode(env.jwtSecret);
-const passwordCost = 12;
+const passwordCost = env.nodeEnv === 'test' ? 4 : 12;
 
 export const sessionCookieName = 'florea_session';
 

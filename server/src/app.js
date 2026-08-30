@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error-middleware.js';
 import { authRouter } from './routes/auth-routes.js';
+import { cartRouter } from './routes/cart-routes.js';
 import { categoryRouter } from './routes/category-routes.js';
 import { healthRouter } from './routes/health-routes.js';
 import { productRouter } from './routes/product-routes.js';
@@ -31,6 +32,7 @@ export const createApp = () => {
 
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/cart', cartRouter);
   app.use('/api/categories', categoryRouter);
   app.use('/api/products', productRouter);
 

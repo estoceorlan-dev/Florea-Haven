@@ -230,33 +230,33 @@ Allow a signed-in customer to build a cart that remains available across session
 
 ### Database
 
-- [ ] Create `cart_items` with foreign keys to users and products.
-- [ ] Enforce one row per user/product pair.
-- [ ] Require positive quantities and define deletion behavior for referenced products.
+- [x] Create `cart_items` with foreign keys to users and products.
+- [x] Enforce one row per user/product pair.
+- [x] Require positive quantities and define deletion behavior for referenced products.
 
 ### Backend
 
-- [ ] Implement `GET /api/cart`.
-- [ ] Implement `POST /api/cart/items`.
-- [ ] Implement `PUT /api/cart/items/:id`.
-- [ ] Implement `DELETE /api/cart/items/:id`.
-- [ ] Verify cart ownership on every operation.
-- [ ] Reject inactive products, invalid quantities, and quantities above current stock.
-- [ ] Calculate display totals from current server-side prices rather than trusting client values.
+- [x] Implement `GET /api/cart`.
+- [x] Implement `POST /api/cart/items`.
+- [x] Implement `PUT /api/cart/items/:id`.
+- [x] Implement `DELETE /api/cart/items/:id`.
+- [x] Verify cart ownership on every operation.
+- [x] Reject inactive products, invalid quantities, and quantities above current stock.
+- [x] Calculate display totals from current server-side prices rather than trusting client values.
 
 ### Frontend
 
-- [ ] Create cart state backed by the cart API.
-- [ ] Add “Add to cart” behavior to product cards and product details.
-- [ ] Build the cart page with quantity controls, removal, subtotal, and stock warnings.
-- [ ] Disable or explain invalid cart actions.
-- [ ] Add empty, loading, and failure states.
+- [x] Create cart state backed by the cart API.
+- [x] Add “Add to cart” behavior to product cards and product details.
+- [x] Build the cart page with quantity controls, removal, subtotal, and stock warnings.
+- [x] Disable or explain invalid cart actions.
+- [x] Add empty, loading, and failure states.
 
 ### Tests
 
-- [ ] Test add, merge/increment, update, remove, and empty-cart behavior.
-- [ ] Test ownership boundaries between two users.
-- [ ] Test products that become inactive or have insufficient stock after being added.
+- [x] Test add, merge/increment, update, remove, and empty-cart behavior.
+- [x] Test ownership boundaries between two users.
+- [x] Test products that become inactive or have insufficient stock after being added.
 
 ### Exit Criteria
 
@@ -541,7 +541,7 @@ Update this table as work advances.
 | 1. Foundation | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 2. Catalog | Implemented | — | — | Automated checks pass; manual viewport QA pending |
 | 3. Authentication | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
-| 4. Cart | Not started | — | — | — |
+| 4. Cart | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 5. Checkout and orders | Not started | — | — | — |
 | 6. Admin catalog | Not started | — | — | — |
 | 7. Admin orders | Not started | — | — | — |

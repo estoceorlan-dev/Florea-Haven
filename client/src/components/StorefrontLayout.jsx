@@ -2,6 +2,7 @@ import { Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { useCart } from '../hooks/useCart.js';
 import { BrandMark } from './BrandMark.jsx';
 
 const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`;
@@ -12,6 +13,7 @@ export function StorefrontLayout() {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { cart } = useCart();
   const accountPath = user?.role === 'admin' ? '/admin' : user ? '/account' : '/login';
 
   const submitSearch = (event) => {
@@ -83,15 +85,18 @@ export function StorefrontLayout() {
             >
               {searchOpen ? <X size={19} /> : <Search size={19} />}
             </button>
-            <button
+            <Link
               className="icon-button relative"
-              type="button"
-              aria-label="Shopping bag — available in the next implementation phase"
-              title="Shopping bag arrives in Phase 4"
+              to="/cart"
+              aria-label={`Shopping cart with ${cart.summary.item_count} items`}
             >
-              <ShoppingBag size={19} />
-              <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-clay" />
-            </button>
+              <ShoppingBag size={19} aria-hidden="true" />
+              {cart.summary.item_count > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-clay px-1 text-[0.56rem] font-bold leading-none text-white">
+                  {cart.summary.item_count > 99 ? '99+' : cart.summary.item_count}
+                </span>
+              )}
+            </Link>
             <Link
               className="icon-button"
               to={accountPath}
@@ -144,6 +149,7 @@ export function StorefrontLayout() {
                   user ? (user.role === 'admin' ? 'Admin' : 'My account') : 'Sign in',
                   accountPath,
                 ],
+                ['Cart', '/cart'],
               ].map(([label, to]) => (
                 <Link
                   className="border-b border-evergreen/10 py-3.5 font-display text-2xl"
