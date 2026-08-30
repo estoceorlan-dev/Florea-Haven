@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-**Floréa Haven** is a small e-commerce web application for selling seeds, flowers, and perfumes. The system allows customers to browse products, search and filter items, manage a shopping cart, place orders, and view their order history. Administrators can manage products, inventory, customers, and orders.
+**Floréa Haven** is a small e-commerce web application for selling seeds, flowers, and perfumes. The system allows customers to browse products, search and filter items, manage a shopping cart, place orders, and view their order history. Administrators can manage products, inventory, and orders, including the customer details needed for fulfillment.
 
 The architecture is intentionally kept simple and suitable for a student project while following a clear separation between the frontend, backend, and database.
 
@@ -216,7 +216,9 @@ DELETE /api/cart/items/:id
 POST   /api/orders
 GET    /api/orders
 GET    /api/orders/:id
-PUT    /api/orders/:id/status
+GET    /api/admin/orders
+GET    /api/admin/orders/:id
+PUT    /api/admin/orders/:id/status
 ```
 
 Administrator-only endpoints should be protected using authentication and role-based authorization middleware.
@@ -262,17 +264,24 @@ cart_items
 orders
 ├── id
 ├── user_id
+├── idempotency_key
+├── subtotal
 ├── total_amount
 ├── status
+├── status_updated_at
+├── payment_method
 ├── delivery_address
-└── created_at
+├── created_at
+└── updated_at
 
 order_items
 ├── id
 ├── order_id
 ├── product_id
+├── product_name
+├── sku
 ├── quantity
-└── price
+└── unit_price
 ```
 
 ### Basic Relationships
@@ -292,13 +301,13 @@ categories
   └──────────< products
 ```
 
-The `price` stored in `order_items` represents the product price at the time the order was placed. This prevents historical orders from changing when a product's current price is updated.
+The product name, SKU, and unit price stored in `order_items` are purchase-time snapshots. This prevents historical orders from changing when current product data is updated.
 
 ---
 
 ## 8. Authentication and Authorization
 
-The application will use JWT-based authentication.
+The application uses JWT-based authentication. Browser sessions are transported in an HTTP-only, same-site cookie rather than JavaScript-accessible storage.
 
 ### Customer Flow
 
@@ -312,11 +321,13 @@ Backend validates credentials
 JWT generated
       │
       ▼
-Frontend stores authentication state
+Backend sets secure session cookie
       │
       ▼
-JWT included with protected API requests
+Browser includes cookie with protected API requests
 ```
+
+State-changing requests verify the request origin as an additional CSRF control. Production serves the frontend and `/api` from the same public origin.
 
 ### Roles
 
@@ -385,11 +396,13 @@ PostgreSQL
 Order Confirmation
 ```
 
+Checkout uses Cash on Delivery for the MVP and creates a `pending` order. Administrators progress it through `confirmed`, `preparing`, `shipped`, and `delivered`; cancellation is allowed only while pending or confirmed and restores stock transactionally.
+
 ---
 
 ## 10. Deployment Architecture
 
-Vercel will be used for deployment.
+Vercel will be used for deployment. The production baseline is one public site: Vite serves the React frontend and routes `/api` to the Express serverless entry point. This same-origin layout keeps authenticated cookies first-party.
 
 ```text
                          Internet
@@ -438,6 +451,7 @@ The project only needs basic security appropriate for a student e-commerce appli
 
 - Hash user passwords.
 - Use JWT authentication for protected requests.
+- Store browser JWTs only in secure, HTTP-only, same-site cookies and verify origins on state-changing requests.
 - Protect admin routes with role-based authorization.
 - Validate user input on the backend.
 - Use parameterized queries or an ORM to prevent SQL injection.

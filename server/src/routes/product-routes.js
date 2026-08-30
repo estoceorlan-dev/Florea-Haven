@@ -185,7 +185,7 @@ productRouter.get('/:id', async (request, response) => {
   );
 
   if (!result.rows[0]) {
-    throw new HttpError(404, 'Product not found.');
+    throw new HttpError(404, 'Product not found.', undefined, 'PRODUCT_NOT_FOUND');
   }
 
   response.json({ data: mapProduct(result.rows[0]) });

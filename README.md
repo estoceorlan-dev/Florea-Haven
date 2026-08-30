@@ -81,6 +81,14 @@ architecture.md      System architecture
 implementation-plan.md
 ```
 
+## Project Decisions and Contracts
+
+- [MVP and technical baseline](./docs/decisions/0001-mvp-technical-baseline.md)
+- [MVP API contract](./docs/api-contract.md)
+- [Feature definition of done](./docs/definition-of-done.md)
+
+The baseline fixes the MVP to Cash on Delivery, signed-in persistent carts, three launch categories, PHP pricing, URL-based product images, HTTP-only cookie sessions, and a one-way order-status workflow.
+
 ## Current Scope
 
 Checkout, orders, and catalog/order administration tools are intentionally deferred to their later implementation phases. The `/admin` route is role-protected now and provides a safe placeholder for those future tools.

@@ -73,8 +73,10 @@ describe('catalog API', () => {
 
     expect(detailResponse.body.data.id).toBe(product.id);
 
-    await request(app)
+    const missingResponse = await request(app)
       .get('/api/products/ffffffff-ffff-4fff-8fff-ffffffffffff')
       .expect(404);
+
+    expect(missingResponse.body.error.code).toBe('PRODUCT_NOT_FOUND');
   });
 });

@@ -60,27 +60,29 @@ Remove decisions that could cause rework before writing application code.
 
 ### Tasks
 
-- [ ] Confirm the MVP features and explicitly defer out-of-scope ideas.
-- [ ] Define the supported product categories: seeds, flowers, and perfumes.
-- [ ] Decide whether checkout is a simulated order placement or includes a payment method. For the initial release, use a simulated payment/Cash on Delivery flow unless a real gateway is required.
-- [ ] Define the initial order statuses and allowed transitions. Suggested flow: `pending → confirmed → preparing → shipped → delivered`, with `cancelled` allowed only from approved earlier states.
-- [ ] Define whether guest carts are required. For the smallest MVP, require sign-in before adding persistent cart items.
-- [ ] Choose the PostgreSQL access layer and migration tool. Use one approach consistently throughout the backend.
-- [ ] Decide how JWTs will be transported. Prefer a secure, HTTP-only cookie in production; document the CSRF strategy if cookies are used.
-- [ ] Define standard API response and error formats.
-- [ ] Decide image handling for the MVP. The simplest option is administrator-provided image URLs with a safe placeholder when missing.
-- [ ] Record supported Node.js and package-manager versions.
+- [x] Confirm the MVP features and explicitly defer out-of-scope ideas.
+- [x] Define the supported product categories: seeds, flowers, and perfumes.
+- [x] Use Cash on Delivery as the only MVP payment method; do not collect or store card details.
+- [x] Define the order flow as `pending → confirmed → preparing → shipped → delivered`, with cancellation allowed only from `pending` or `confirmed`.
+- [x] Require sign-in before adding persistent cart items; defer guest carts and merging.
+- [x] Use `pg`, parameterized SQL, and ordered SQL migration files consistently throughout the backend.
+- [x] Transport browser JWTs in a secure, HTTP-only, same-site cookie and verify request origins for state-changing operations.
+- [x] Define standard API response and error formats.
+- [x] Use administrator-provided HTTP(S) image URLs with a safe client placeholder.
+- [x] Support Node.js 22+ and npm 10+.
 
 ### Deliverables
 
-- A short decision record in the README or `docs/decisions/`.
-- Initial endpoint contract and validation rules.
-- Agreed definition of done for each feature.
+- [MVP and technical baseline](./docs/decisions/0001-mvp-technical-baseline.md)
+- [Initial endpoint contract and validation rules](./docs/api-contract.md)
+- [Feature definition of done](./docs/definition-of-done.md)
 
 ### Exit Criteria
 
 - No unresolved decision blocks database schema, authentication, checkout, or deployment.
 - The team can explain the complete MVP customer and administrator journeys.
+
+Phase 0 was completed on 2026-08-30. The accepted decisions preserve the conventions already implemented in Phases 1–4 and define the checkout, order-history, status, and deployment rules needed by later phases.
 
 ---
 
@@ -278,7 +280,7 @@ Convert a valid cart into an immutable order without overselling inventory.
 - [ ] Store the product price at purchase time in each order item.
 - [ ] Store the delivery address snapshot on the order.
 - [ ] Add order status constraints, timestamps, and useful indexes.
-- [ ] Decide how product names are preserved for historical orders if products can later be renamed or deleted.
+- [ ] Store product name and SKU snapshots so later catalog edits cannot change order history.
 
 ### Backend
 
@@ -322,10 +324,10 @@ Allow administrators to maintain the catalog without direct database access.
 
 ### Backend
 
-- [ ] Implement protected category create, update, and delete/deactivate endpoints.
-- [ ] Implement protected product create, update, and delete/deactivate endpoints.
+- [ ] Implement protected category create, update, and delete endpoints.
+- [ ] Implement protected product create, update, and deactivate endpoints.
 - [ ] Validate names, descriptions, prices, stock, categories, and image URLs.
-- [ ] Prevent category deletion when it would leave invalid product references, or define a reassignment/deactivation workflow.
+- [ ] Reject category deletion with `CATEGORY_IN_USE` when any product references it.
 - [ ] Preserve historical order data when a product is deactivated or deleted.
 
 ### Frontend
@@ -350,7 +352,7 @@ Allow administrators to maintain the catalog without direct database access.
 
 ---
 
-## 12. Phase 7 — Admin Order and Customer Management
+## 12. Phase 7 — Admin Order Management
 
 ### Goal
 
@@ -360,16 +362,16 @@ Give administrators the minimum operational tools needed to fulfill orders.
 
 - [ ] Add a paginated admin order-list endpoint with status, date, and customer filters.
 - [ ] Add an admin order-detail endpoint.
-- [ ] Implement `PUT /api/orders/:id/status` with allowed-transition validation.
-- [ ] Add a read-only, paginated customer list if it is required by the MVP.
-- [ ] Record when order status changes; optionally record which administrator made the change.
+- [ ] Implement `PUT /api/admin/orders/:id/status` with allowed-transition validation and atomic stock restoration on cancellation.
+- [ ] Include the customer name and email required for fulfillment in the admin order-detail response.
+- [ ] Record each order's `status_updated_at`; defer a full actor audit trail.
 
 ### Frontend
 
 - [ ] Build the admin orders table with search, filters, and pagination.
 - [ ] Build the admin order-details page.
 - [ ] Add status-update controls that show only legal next states.
-- [ ] Build the minimal customer list/view if retained in scope.
+- [ ] Display fulfillment-relevant customer details within the admin order view; do not add standalone customer administration.
 
 ### Tests
 
@@ -537,7 +539,7 @@ Update this table as work advances.
 
 | Phase | Status | Owner | Target | Notes |
 |---|---|---|---|---|
-| 0. Decisions | Not started | — | — | — |
+| 0. Decisions | Complete | — | 2026-08-30 | Decision record, API contract, and feature definition of done accepted |
 | 1. Foundation | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 2. Catalog | Implemented | — | — | Automated checks pass; manual viewport QA pending |
 | 3. Authentication | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
