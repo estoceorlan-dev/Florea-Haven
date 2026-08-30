@@ -1,6 +1,7 @@
-import { Menu, Search, ShoppingBag, X } from 'lucide-react';
+import { Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.js';
 import { BrandMark } from './BrandMark.jsx';
 
 const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`;
@@ -10,6 +11,8 @@ export function StorefrontLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const accountPath = user?.role === 'admin' ? '/admin' : user ? '/account' : '/login';
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -89,6 +92,13 @@ export function StorefrontLayout() {
               <ShoppingBag size={19} />
               <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-clay" />
             </button>
+            <Link
+              className="icon-button"
+              to={accountPath}
+              aria-label={user ? `Open account for ${user.name}` : 'Sign in'}
+            >
+              <UserRound size={19} aria-hidden="true" />
+            </Link>
           </div>
         </div>
 
@@ -130,6 +140,10 @@ export function StorefrontLayout() {
                 ['Flowers', '/products?category=flowers'],
                 ['Seeds', '/products?category=seeds'],
                 ['Perfumes', '/products?category=perfumes'],
+                [
+                  user ? (user.role === 'admin' ? 'Admin' : 'My account') : 'Sign in',
+                  accountPath,
+                ],
               ].map(([label, to]) => (
                 <Link
                   className="border-b border-evergreen/10 py-3.5 font-display text-2xl"

@@ -1,9 +1,11 @@
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error-middleware.js';
+import { authRouter } from './routes/auth-routes.js';
 import { categoryRouter } from './routes/category-routes.js';
 import { healthRouter } from './routes/health-routes.js';
 import { productRouter } from './routes/product-routes.js';
@@ -16,9 +18,11 @@ export const createApp = () => {
   app.use(
     cors({
       origin: env.clientOrigin,
-      methods: ['GET', 'OPTIONS'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     }),
   );
+  app.use(cookieParser());
   app.use(express.json({ limit: '100kb' }));
 
   if (env.nodeEnv !== 'test') {
@@ -26,6 +30,7 @@ export const createApp = () => {
   }
 
   app.use('/api/health', healthRouter);
+  app.use('/api/auth', authRouter);
   app.use('/api/categories', categoryRouter);
   app.use('/api/products', productRouter);
 

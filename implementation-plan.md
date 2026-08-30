@@ -184,35 +184,35 @@ Establish user identity before building protected customer and administrator wor
 
 ### Database
 
-- [ ] Create the `users` table with unique, normalized email addresses.
-- [ ] Restrict roles to supported values such as `customer` and `admin`.
-- [ ] Add a safe method for creating the first administrator account.
+- [x] Create the `users` table with unique, normalized email addresses.
+- [x] Restrict roles to supported values such as `customer` and `admin`.
+- [x] Add a safe method for creating the first administrator account.
 
 ### Backend
 
-- [ ] Implement `POST /api/auth/register`.
-- [ ] Implement `POST /api/auth/login`.
-- [ ] Implement `POST /api/auth/logout` if cookie-based authentication is selected.
-- [ ] Implement `GET /api/auth/me`.
-- [ ] Hash passwords with a maintained password-hashing library.
-- [ ] Add authentication and admin-authorization middleware.
-- [ ] Validate email and password inputs and return generic login failures.
-- [ ] Add rate limiting to authentication endpoints.
+- [x] Implement `POST /api/auth/register`.
+- [x] Implement `POST /api/auth/login`.
+- [x] Implement `POST /api/auth/logout` using HTTP-only cookie authentication.
+- [x] Implement `GET /api/auth/me`.
+- [x] Hash passwords with a maintained password-hashing library.
+- [x] Add authentication and admin-authorization middleware.
+- [x] Validate email and password inputs and return generic login failures.
+- [x] Add rate limiting to authentication endpoints.
 
 ### Frontend
 
-- [ ] Build registration and login forms with accessible validation messages.
-- [ ] Create authentication state and session restoration.
-- [ ] Add protected customer routes and admin-only routes.
-- [ ] Add sign-out behavior and handle expired sessions cleanly.
-- [ ] Redirect users back to their intended page after successful login.
+- [x] Build registration and login forms with accessible validation messages.
+- [x] Create authentication state and session restoration.
+- [x] Add protected customer routes and admin-only routes.
+- [x] Add sign-out behavior and handle expired sessions cleanly.
+- [x] Redirect users back to their intended page after successful login.
 
 ### Tests
 
-- [ ] Test successful registration, duplicate email, login, invalid credentials, and session restoration.
-- [ ] Test missing, expired, and malformed authentication credentials.
-- [ ] Verify a customer cannot use an admin endpoint or open an admin page.
-- [ ] Verify password hashes and tokens never appear in API responses or logs.
+- [x] Test successful registration, duplicate email, login, invalid credentials, and session restoration.
+- [x] Test missing, expired, and malformed authentication credentials.
+- [x] Verify a customer cannot use an admin endpoint or open an admin page.
+- [x] Verify password hashes and tokens never appear in API response bodies or logs.
 
 ### Exit Criteria
 
@@ -540,7 +540,7 @@ Update this table as work advances.
 | 0. Decisions | Not started | — | — | — |
 | 1. Foundation | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 2. Catalog | Implemented | — | — | Automated checks pass; manual viewport QA pending |
-| 3. Authentication | Not started | — | — | — |
+| 3. Authentication | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 4. Cart | Not started | — | — | — |
 | 5. Checkout and orders | Not started | — | — | — |
 | 6. Admin catalog | Not started | — | — | — |

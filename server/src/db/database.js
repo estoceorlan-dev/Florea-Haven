@@ -7,21 +7,34 @@ import { env, paths } from '../config/env.js';
 let pool;
 let databaseMode;
 
-const readSql = (relativePath) =>
-  fs.readFile(path.join(paths.serverRoot, relativePath), 'utf8');
+const readSqlDirectory = async (relativePath) => {
+  const directory = path.join(paths.serverRoot, relativePath);
+  const fileNames = (await fs.readdir(directory))
+    .filter((fileName) => fileName.endsWith('.sql'))
+    .sort();
+
+  return Promise.all(
+    fileNames.map((fileName) => fs.readFile(path.join(directory, fileName), 'utf8')),
+  );
+};
 
 const createMemoryPool = async () => {
   const memoryDatabase = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memoryDatabase.adapters.createPg();
   const memoryPool = new adapter.Pool();
 
-  const [catalogMigration, catalogSeed] = await Promise.all([
-    readSql('migrations/001_catalog.sql'),
-    readSql('seeds/catalog.sql'),
+  const [migrations, seeds] = await Promise.all([
+    readSqlDirectory('migrations'),
+    readSqlDirectory('seeds'),
   ]);
 
-  await memoryPool.query(catalogMigration);
-  await memoryPool.query(catalogSeed);
+  for (const migration of migrations) {
+    await memoryPool.query(migration);
+  }
+
+  for (const seed of seeds) {
+    await memoryPool.query(seed);
+  }
 
   return memoryPool;
 };

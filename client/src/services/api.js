@@ -14,6 +14,7 @@ const request = async (path, options = {}) => {
 
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
+      credentials: 'include',
       headers: { Accept: 'application/json', ...options.headers },
       ...options,
     });
@@ -37,6 +38,13 @@ const request = async (path, options = {}) => {
   return payload;
 };
 
+const jsonRequest = (path, method, body) =>
+  request(path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
 const toQueryString = (params) => {
   const query = new URLSearchParams();
 
@@ -54,4 +62,11 @@ export const catalogApi = {
   getCategories: () => request('/api/categories'),
   getProducts: (params = {}) => request(`/api/products${toQueryString(params)}`),
   getProduct: (id) => request(`/api/products/${id}`),
+};
+
+export const authApi = {
+  register: (input) => jsonRequest('/api/auth/register', 'POST', input),
+  login: (input) => jsonRequest('/api/auth/login', 'POST', input),
+  logout: () => jsonRequest('/api/auth/logout', 'POST'),
+  getMe: () => request('/api/auth/me'),
 };

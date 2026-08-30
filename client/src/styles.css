@@ -179,6 +179,12 @@
     background: #285e44;
   }
 
+  .button-primary:disabled,
+  .button-secondary:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
   .button-secondary {
     border: 1px solid color-mix(in srgb, var(--color-evergreen) 30%, transparent);
     color: var(--color-evergreen);
@@ -290,6 +296,67 @@
   .pagination-button:disabled {
     cursor: not-allowed;
     opacity: 0.35;
+  }
+
+  .form-field {
+    display: grid;
+    gap: 0.5rem;
+    color: var(--color-evergreen);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid color-mix(in srgb, var(--color-evergreen) 18%, transparent);
+    background: white;
+    padding: 0.8rem 0.9rem;
+    color: var(--color-ink);
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    outline: none;
+    text-transform: none;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .form-input:focus {
+    border-color: var(--color-evergreen);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-sage) 65%, transparent);
+  }
+
+  .form-input[aria-invalid='true'] {
+    border-color: var(--color-clay);
+  }
+
+  .form-hint,
+  .form-field-error {
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.5;
+    text-transform: none;
+  }
+
+  .form-hint {
+    color: color-mix(in srgb, var(--color-ink) 50%, transparent);
+  }
+
+  .form-field-error {
+    color: var(--color-clay);
+  }
+
+  .form-alert {
+    border: 1px solid color-mix(in srgb, var(--color-clay) 28%, transparent);
+    background: color-mix(in srgb, var(--color-blush) 45%, white);
+    padding: 0.85rem 1rem;
+    color: var(--color-ink);
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 }
 

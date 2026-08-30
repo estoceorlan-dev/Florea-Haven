@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
@@ -24,7 +25,21 @@ export const env = {
     !process.env.DATABASE_URL,
   ),
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+  jwtSecret:
+    process.env.JWT_SECRET ||
+    (process.env.NODE_ENV === 'production'
+      ? undefined
+      : randomBytes(48).toString('base64url')),
+  sessionDays: Number(process.env.SESSION_DAYS ?? 7),
 };
+
+if (!env.jwtSecret) {
+  throw new Error('JWT_SECRET is required in production.');
+}
+
+if (!Number.isInteger(env.sessionDays) || env.sessionDays < 1 || env.sessionDays > 30) {
+  throw new Error('SESSION_DAYS must be an integer between 1 and 30.');
+}
 
 export const paths = {
   serverRoot,
