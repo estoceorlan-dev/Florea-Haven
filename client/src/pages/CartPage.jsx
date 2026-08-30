@@ -203,7 +203,8 @@ export function CartPage() {
             </strong>
           </div>
           <p className="mt-4 text-xs leading-5 text-ink/50">
-            Delivery and final availability will be confirmed at checkout.
+            Cash on Delivery. Prices and availability are confirmed when you place the
+            order.
           </p>
 
           {cart.summary.has_unavailable_items && (
@@ -215,14 +216,16 @@ export function CartPage() {
             </div>
           )}
 
-          <button
-            className="button-primary mt-6 w-full"
-            type="button"
-            disabled
-            title="Checkout arrives in Phase 5"
-          >
-            Checkout in Phase 5
-          </button>
+          {cart.summary.has_unavailable_items ? (
+            <button className="button-primary mt-6 w-full" type="button" disabled>
+              Checkout unavailable
+            </button>
+          ) : (
+            <Link className="button-primary mt-6 w-full" to="/checkout">
+              Continue to checkout
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          )}
           <button className="text-link mx-auto mt-5" type="button" onClick={reload}>
             <RefreshCw size={13} aria-hidden="true" />
             Refresh availability

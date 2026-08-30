@@ -3,6 +3,7 @@ import { CartContext } from '../context/CartContext.js';
 
 const emptyCart = {
   items: [],
+  revision: null,
   summary: {
     item_count: 0,
     distinct_items: 0,

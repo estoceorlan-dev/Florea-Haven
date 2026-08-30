@@ -1,4 +1,10 @@
-import { LogOut, ShieldAlert, Sprout } from 'lucide-react';
+import {
+  ArrowRight,
+  LogOut,
+  PackageOpen,
+  ShieldAlert,
+  ShoppingBag,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
@@ -62,22 +68,31 @@ export function AccountPage() {
             </button>
           </div>
 
-          <div className="mt-10 border-t border-evergreen/10 pt-8">
-            <div className="flex gap-4 bg-mist p-5 sm:p-6">
-              <Sprout className="mt-0.5 shrink-0 text-leaf" size={22} />
-              <div>
-                <h2 className="font-display text-2xl text-evergreen">
-                  Your account is ready to grow
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-ink/60">
-                  Persistent carts and order history arrive in the next phases. Your
-                  secure account will carry those experiences when they are added.
-                </p>
-                <Link className="text-link mt-5" to="/products">
-                  Explore the collection
-                </Link>
-              </div>
-            </div>
+          <div className="mt-10 grid gap-4 border-t border-evergreen/10 pt-8 sm:grid-cols-2">
+            <Link className="group bg-mist p-6" to="/orders">
+              <PackageOpen className="text-leaf" size={22} />
+              <h2 className="mt-5 font-display text-2xl text-evergreen">
+                Order history
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-ink/60">
+                Review your order details, totals, address, and current status.
+              </p>
+              <span className="text-link mt-5">
+                View orders
+                <ArrowRight size={13} />
+              </span>
+            </Link>
+            <Link className="group border border-evergreen/10 bg-white p-6" to="/cart">
+              <ShoppingBag className="text-leaf" size={22} />
+              <h2 className="mt-5 font-display text-2xl text-evergreen">Saved cart</h2>
+              <p className="mt-2 text-sm leading-6 text-ink/60">
+                Return to the pieces you saved and continue to secure checkout.
+              </p>
+              <span className="text-link mt-5">
+                Open cart
+                <ArrowRight size={13} />
+              </span>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 # Floréa Haven
 
-Floréa Haven is a full-stack storefront for seeds, flowers, and botanical perfumes. The current implementation covers the project foundation, public catalog, authentication, and persistent shopping cart described in Phases 1–4 of the implementation plan.
+Floréa Haven is a full-stack storefront for seeds, flowers, and botanical perfumes. The current implementation covers the project foundation, public catalog, authentication, persistent shopping cart, checkout, and customer orders described in Phases 1–5 of the implementation plan.
 
 ## Requirements
 
@@ -66,9 +66,14 @@ GET /api/cart
 POST /api/cart/items
 PUT /api/cart/items/:id
 DELETE /api/cart/items/:id
+POST /api/orders
+GET /api/orders
+GET /api/orders/:id
 ```
 
 Product-list query parameters include `search`, `category`, `minPrice`, `maxPrice`, `sort`, `page`, and `limit`.
+
+Checkout uses Cash on Delivery. `POST /api/orders` requires a UUID `Idempotency-Key` header and the current server-provided cart revision; see the [MVP API contract](./docs/api-contract.md) for the complete request and validation rules.
 
 ## Project Structure
 
@@ -91,4 +96,4 @@ The baseline fixes the MVP to Cash on Delivery, signed-in persistent carts, thre
 
 ## Current Scope
 
-Checkout, orders, and catalog/order administration tools are intentionally deferred to their later implementation phases. The `/admin` route is role-protected now and provides a safe placeholder for those future tools.
+Catalog and order administration tools are intentionally deferred to their later implementation phases. The `/admin` route is role-protected now and provides a safe placeholder for those future tools.

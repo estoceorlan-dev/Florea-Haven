@@ -49,7 +49,7 @@ describe('cart API', () => {
     const agent = await createCustomerAgent();
     const response = await agent.get('/api/cart').expect(200);
 
-    expect(response.body.data.cart).toEqual({
+    expect(response.body.data.cart).toMatchObject({
       items: [],
       summary: {
         item_count: 0,
@@ -58,6 +58,7 @@ describe('cart API', () => {
         has_unavailable_items: false,
       },
     });
+    expect(response.body.data.cart.revision).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('adds, merges, updates, and removes a cart item using server prices', async () => {

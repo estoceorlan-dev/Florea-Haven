@@ -1,11 +1,12 @@
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
 
 export class ApiError extends Error {
-  constructor(message, status, details) {
+  constructor(message, status, details, code) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.details = details;
+    this.code = code;
   }
 }
 
@@ -32,16 +33,17 @@ const request = async (path, options = {}) => {
       payload?.error?.message ?? 'Something went wrong. Please try again.',
       response.status,
       payload?.error?.details,
+      payload?.error?.code,
     );
   }
 
   return payload;
 };
 
-const jsonRequest = (path, method, body) =>
+const jsonRequest = (path, method, body, headers = {}) =>
   request(path, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
@@ -78,4 +80,13 @@ export const cartApi = {
   updateItem: (itemId, quantity) =>
     jsonRequest(`/api/cart/items/${itemId}`, 'PUT', { quantity }),
   removeItem: (itemId) => request(`/api/cart/items/${itemId}`, { method: 'DELETE' }),
+};
+
+export const orderApi = {
+  placeOrder: (input, idempotencyKey) =>
+    jsonRequest('/api/orders', 'POST', input, {
+      'Idempotency-Key': idempotencyKey,
+    }),
+  getOrders: (params = {}) => request(`/api/orders${toQueryString(params)}`),
+  getOrder: (id) => request(`/api/orders/${id}`),
 };

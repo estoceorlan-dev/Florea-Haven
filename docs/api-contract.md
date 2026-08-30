@@ -1,6 +1,6 @@
 # MVP API Contract
 
-This document is the baseline contract for Floréa Haven. Routes marked **implemented** exist in Phases 1–4; routes marked **planned** are reserved for later MVP phases.
+This document is the baseline contract for Floréa Haven. Routes marked **implemented** exist in Phases 1–5; routes marked **planned** are reserved for later MVP phases.
 
 ## General conventions
 
@@ -58,15 +58,15 @@ Collection:
 }
 ```
 
-| HTTP status | Meaning                            | Typical codes                                                                                                                                |
-| ----------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `400`       | Invalid input                      | `VALIDATION_ERROR`                                                                                                                           |
-| `401`       | Missing or invalid session         | `AUTHENTICATION_REQUIRED`, `INVALID_CREDENTIALS`                                                                                             |
-| `403`       | Authenticated but not allowed      | `ADMIN_ACCESS_REQUIRED`, `ORIGIN_NOT_ALLOWED`                                                                                                |
-| `404`       | Resource or route is unavailable   | `NOT_FOUND`, `PRODUCT_NOT_FOUND`, `CART_ITEM_NOT_FOUND`, `ORDER_NOT_FOUND`                                                                   |
-| `409`       | Current state prevents the request | `EMAIL_ALREADY_REGISTERED`, `PRODUCT_INACTIVE`, `INSUFFICIENT_STOCK`, `CATEGORY_IN_USE`, `INVALID_STATUS_TRANSITION`, `IDEMPOTENCY_CONFLICT` |
-| `429`       | Rate limit reached                 | `RATE_LIMITED`                                                                                                                               |
-| `500`       | Unexpected server failure          | `INTERNAL_SERVER_ERROR`                                                                                                                      |
+| HTTP status | Meaning                            | Typical codes                                                                                                                                                              |
+| ----------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`       | Invalid input                      | `VALIDATION_ERROR`                                                                                                                                                         |
+| `401`       | Missing or invalid session         | `AUTHENTICATION_REQUIRED`, `INVALID_CREDENTIALS`                                                                                                                           |
+| `403`       | Authenticated but not allowed      | `ADMIN_ACCESS_REQUIRED`, `CUSTOMER_ACCESS_REQUIRED`, `ORIGIN_NOT_ALLOWED`                                                                                                  |
+| `404`       | Resource or route is unavailable   | `NOT_FOUND`, `PRODUCT_NOT_FOUND`, `CART_ITEM_NOT_FOUND`, `ORDER_NOT_FOUND`                                                                                                 |
+| `409`       | Current state prevents the request | `EMAIL_ALREADY_REGISTERED`, `EMPTY_CART`, `CART_CHANGED`, `PRODUCT_INACTIVE`, `INSUFFICIENT_STOCK`, `CATEGORY_IN_USE`, `INVALID_STATUS_TRANSITION`, `IDEMPOTENCY_CONFLICT` |
+| `429`       | Rate limit reached                 | `RATE_LIMITED`                                                                                                                                                             |
+| `500`       | Unexpected server failure          | `INTERNAL_SERVER_ERROR`                                                                                                                                                    |
 
 Production `500` responses never include stack traces or database messages.
 
@@ -92,9 +92,9 @@ Every state-changing browser endpoint performs request-origin validation. In pro
 | `POST /api/cart/items`             | Customer or admin             | Implemented |
 | `PUT /api/cart/items/:id`          | Customer or admin; owner only | Implemented |
 | `DELETE /api/cart/items/:id`       | Customer or admin; owner only | Implemented |
-| `POST /api/orders`                 | Customer; own cart            | Planned     |
-| `GET /api/orders`                  | Customer; own orders          | Planned     |
-| `GET /api/orders/:id`              | Customer; owner only          | Planned     |
+| `POST /api/orders`                 | Customer; own cart            | Implemented |
+| `GET /api/orders`                  | Customer; own orders          | Implemented |
+| `GET /api/orders/:id`              | Customer; owner only          | Implemented |
 | `POST /api/categories`             | Admin                         | Planned     |
 | `PUT /api/categories/:id`          | Admin                         | Planned     |
 | `DELETE /api/categories/:id`       | Admin                         | Planned     |
@@ -174,13 +174,15 @@ Registration and login are limited to 20 attempts per 15-minute window per rate-
 - Inactive products cannot be added or increased.
 - Item routes always scope database operations to the authenticated user.
 - Each successful mutation returns the refreshed server-calculated cart.
+- Every cart response includes a SHA-256 `revision` derived from item identity, quantity, current price, stock, and active state. Checkout uses it to detect changes made after the customer reviewed the cart.
 
-## Planned checkout and order rules
+## Checkout and order rules
 
 `POST /api/orders` requires an `Idempotency-Key` header containing a UUID and this body:
 
 ```json
 {
+  "cartRevision": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "paymentMethod": "cash_on_delivery",
   "deliveryAddress": {
     "recipientName": "Ana Reyes",
@@ -195,6 +197,7 @@ Registration and login are limited to 20 attempts per 15-minute window per rate-
 }
 ```
 
+- `cartRevision`: the 64-character lowercase hexadecimal revision from the latest cart response.
 - `paymentMethod`: exactly `cash_on_delivery`.
 - `recipientName`: trimmed, 2–80 characters.
 - `phone`: trimmed, 7–30 characters.
@@ -204,7 +207,7 @@ Registration and login are limited to 20 attempts per 15-minute window per rate-
 - `postalCode`: trimmed, 3–12 letters, numbers, spaces, or hyphens.
 - `country`: exactly `Philippines` for the MVP.
 
-The API rejects an empty cart, inactive product, changed/insufficient stock, or invalid address without partially creating an order. A successful response is `201`, clears the cart, and returns the order with address and item snapshots. Reusing an idempotency key with the same request returns the original successful order; reusing it for different input returns `409 IDEMPOTENCY_CONFLICT`.
+The API rejects an empty cart, stale cart revision, inactive product, changed/insufficient stock, or invalid address without partially creating an order. A successful response is `201`, clears the cart, and returns the order with address and item snapshots. Reusing an idempotency key with the same request returns the original order with `200` and `idempotent_replay: true`; reusing it for different input returns `409 IDEMPOTENCY_CONFLICT`.
 
 `GET /api/orders` supports `page` and `limit` using the catalog pagination bounds. `GET /api/orders/:id` returns `404 ORDER_NOT_FOUND` both for a missing order and for an order owned by another customer, avoiding ownership disclosure.
 

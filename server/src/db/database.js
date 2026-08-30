@@ -6,6 +6,8 @@ import { env, paths } from '../config/env.js';
 
 let pool;
 let databaseMode;
+let memoryDatabase;
+let memoryTransactionTail = Promise.resolve();
 
 const readSqlDirectory = async (relativePath) => {
   const directory = path.join(paths.serverRoot, relativePath);
@@ -19,7 +21,7 @@ const readSqlDirectory = async (relativePath) => {
 };
 
 const createMemoryPool = async () => {
-  const memoryDatabase = newDb({ autoCreateForeignKeyIndices: true });
+  memoryDatabase = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memoryDatabase.adapters.createPg();
   const memoryPool = new adapter.Pool();
 
@@ -67,6 +69,43 @@ export const query = async (text, values = []) => {
   return activePool.query(text, values);
 };
 
+export const withTransaction = async (operation) => {
+  const activePool = await initializeDatabase();
+
+  if (databaseMode === 'memory') {
+    const previousTransaction = memoryTransactionTail;
+    let releaseTransaction;
+    memoryTransactionTail = new Promise((resolve) => {
+      releaseTransaction = resolve;
+    });
+    await previousTransaction;
+    const backup = memoryDatabase.backup();
+
+    try {
+      return await operation((text, values = []) => activePool.query(text, values));
+    } catch (error) {
+      backup.restore();
+      throw error;
+    } finally {
+      releaseTransaction();
+    }
+  }
+
+  const client = await activePool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const result = await operation((text, values = []) => client.query(text, values));
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 export const checkDatabase = async () => {
   const startedAt = performance.now();
   await query('SELECT 1 AS healthy');
@@ -83,4 +122,6 @@ export const closeDatabase = async () => {
   await pool.end();
   pool = undefined;
   databaseMode = undefined;
+  memoryDatabase = undefined;
+  memoryTransactionTail = Promise.resolve();
 };

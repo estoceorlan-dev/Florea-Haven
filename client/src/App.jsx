@@ -5,9 +5,13 @@ import { StorefrontLayout } from './components/StorefrontLayout.jsx';
 import { AccountPage } from './pages/AccountPage.jsx';
 import { AdminHomePage } from './pages/AdminHomePage.jsx';
 import { CartPage } from './pages/CartPage.jsx';
+import { CheckoutPage } from './pages/CheckoutPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage.jsx';
+import { OrderDetailPage } from './pages/OrderDetailPage.jsx';
+import { OrdersPage } from './pages/OrdersPage.jsx';
 import { ProductDetailsPage } from './pages/ProductDetailsPage.jsx';
 import { ProductsPage } from './pages/ProductsPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
@@ -24,6 +28,13 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
           <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:orderId" element={<OrderDetailPage />} />
+          <Route
+            path="orders/:orderId/confirmation"
+            element={<OrderConfirmationPage />}
+          />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

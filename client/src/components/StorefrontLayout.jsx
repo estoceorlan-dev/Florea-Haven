@@ -31,7 +31,7 @@ export function StorefrontLayout() {
       </a>
 
       <div className="bg-evergreen px-4 py-2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.19em] text-ivory sm:text-xs">
-        Free Metro Manila delivery on orders over ₱3,500
+        Cash on Delivery · Made gently in Metro Manila
       </div>
 
       <header className="sticky top-0 z-40 border-b border-evergreen/10 bg-ivory/95 backdrop-blur-xl">
@@ -73,6 +73,11 @@ export function StorefrontLayout() {
             <NavLink className={navLinkClass} to="/products?category=perfumes">
               Perfumes
             </NavLink>
+            {user?.role === 'customer' && (
+              <NavLink className={navLinkClass} to="/orders">
+                My orders
+              </NavLink>
+            )}
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-2">
@@ -150,6 +155,7 @@ export function StorefrontLayout() {
                   accountPath,
                 ],
                 ['Cart', '/cart'],
+                ...(user?.role === 'customer' ? [['My orders', '/orders']] : []),
               ].map(([label, to]) => (
                 <Link
                   className="border-b border-evergreen/10 py-3.5 font-display text-2xl"

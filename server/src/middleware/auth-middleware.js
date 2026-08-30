@@ -80,3 +80,19 @@ export const requireAdmin = (request, response, next) => {
 
   next();
 };
+
+export const requireCustomer = (request, response, next) => {
+  if (request.user?.role !== 'customer') {
+    next(
+      new HttpError(
+        403,
+        'Customer access is required.',
+        undefined,
+        'CUSTOMER_ACCESS_REQUIRED',
+      ),
+    );
+    return;
+  }
+
+  next();
+};

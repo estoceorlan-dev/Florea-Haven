@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { query } from '../db/database.js';
 
 const availabilityFor = (row) => {
@@ -9,8 +10,24 @@ const availabilityFor = (row) => {
   return 'available';
 };
 
-export const getCart = async (userId) => {
-  const result = await query(
+const revisionFor = (items) =>
+  createHash('sha256')
+    .update(
+      JSON.stringify(
+        items.map((item) => ({
+          id: item.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          stock_quantity: item.product.stock_quantity,
+          is_active: item.product.is_active,
+        })),
+      ),
+    )
+    .digest('hex');
+
+export const getCart = async (userId, execute = query) => {
+  const result = await execute(
     `
       SELECT
         ci.id,
@@ -71,6 +88,7 @@ export const getCart = async (userId) => {
 
   return {
     items,
+    revision: revisionFor(items),
     summary: {
       item_count: items.reduce((total, item) => total + item.quantity, 0),
       distinct_items: items.length,

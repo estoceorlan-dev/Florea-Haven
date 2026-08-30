@@ -276,37 +276,37 @@ Convert a valid cart into an immutable order without overselling inventory.
 
 ### Database
 
-- [ ] Create `orders` and `order_items` through migrations.
-- [ ] Store the product price at purchase time in each order item.
-- [ ] Store the delivery address snapshot on the order.
-- [ ] Add order status constraints, timestamps, and useful indexes.
-- [ ] Store product name and SKU snapshots so later catalog edits cannot change order history.
+- [x] Create `orders` and `order_items` through migrations.
+- [x] Store the product price at purchase time in each order item.
+- [x] Store the delivery address snapshot on the order.
+- [x] Add order status constraints, timestamps, and useful indexes.
+- [x] Store product name and SKU snapshots so later catalog edits cannot change order history.
 
 ### Backend
 
-- [ ] Implement `POST /api/orders` using a database transaction.
-- [ ] Within the transaction: load the cart, re-check active products and stock, calculate totals, create the order and items, reduce stock safely, and clear the cart.
-- [ ] Ensure concurrent checkouts cannot reduce stock below zero.
-- [ ] Make repeated checkout submissions safe through an idempotency key or equivalent duplicate-submission protection.
-- [ ] Implement `GET /api/orders` for the current customer.
-- [ ] Implement `GET /api/orders/:id` with strict ownership checks.
-- [ ] Return useful validation conflicts when price or availability changes.
+- [x] Implement `POST /api/orders` using a database transaction.
+- [x] Within the transaction: load the cart, re-check active products and stock, calculate totals, create the order and items, reduce stock safely, and clear the cart.
+- [x] Ensure concurrent checkouts cannot reduce stock below zero.
+- [x] Make repeated checkout submissions safe through an idempotency key and request fingerprint.
+- [x] Implement `GET /api/orders` for the current customer.
+- [x] Implement `GET /api/orders/:id` with strict ownership checks.
+- [x] Return useful validation conflicts when price or availability changes.
 
 ### Frontend
 
-- [ ] Build the checkout page with order summary and delivery-address form.
-- [ ] Show server validation errors without losing entered form data.
-- [ ] Prevent accidental double submission while checkout is processing.
-- [ ] Build order confirmation, order history, and order-detail pages.
-- [ ] Clearly display status, item price snapshots, totals, address, and timestamps.
+- [x] Build the checkout page with order summary and delivery-address form.
+- [x] Show server validation errors without losing entered form data.
+- [x] Prevent accidental double submission while checkout is processing.
+- [x] Build order confirmation, order history, and order-detail pages.
+- [x] Clearly display status, item price snapshots, totals, address, and timestamps.
 
 ### Tests
 
-- [ ] Test successful order creation and exact total calculations.
-- [ ] Test empty carts, insufficient stock, inactive products, invalid addresses, and duplicate submissions.
-- [ ] Test transaction rollback so a failed order does not partially change stock, cart items, or order records.
-- [ ] Test simultaneous attempts to purchase the last available item.
-- [ ] Test that one customer cannot access another customer's order.
+- [x] Test successful order creation and exact total calculations.
+- [x] Test empty carts, insufficient stock, inactive products, invalid addresses, and duplicate submissions.
+- [x] Test transaction rollback so a failed order does not partially change stock, cart items, or order records.
+- [x] Test simultaneous attempts to purchase the last available item.
+- [x] Test that one customer cannot access another customer's order.
 
 ### Exit Criteria
 
@@ -544,7 +544,7 @@ Update this table as work advances.
 | 2. Catalog | Implemented | — | — | Automated checks pass; manual viewport QA pending |
 | 3. Authentication | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 4. Cart | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
-| 5. Checkout and orders | Not started | — | — | — |
+| 5. Checkout and orders | Implemented | — | 2026-08-30 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 6. Admin catalog | Not started | — | — | — |
 | 7. Admin orders | Not started | — | — | — |
 | 8. Hardening | Not started | — | — | — |

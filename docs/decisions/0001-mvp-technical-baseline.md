@@ -37,6 +37,7 @@ The MVP does not include real payment processing, guest carts, customer account 
 - A successful checkout creates an order with status `pending`.
 - Checkout runs in one database transaction, locks/rechecks inventory, snapshots purchased data, decrements stock, and clears the cart. A failure rolls back every change.
 - `POST /api/orders` requires an `Idempotency-Key` header so retrying the same submission returns the original result rather than creating another order.
+- Cart responses include a server-derived revision covering quantities, current prices, stock, and availability. Checkout rejects a stale revision before creating an order, while conditional inventory updates remain the final concurrency guard.
 - Delivery data is validated by the API and stored as an immutable JSONB address snapshot on the order.
 - Each order stores a UUID idempotency key with a unique constraint on `(user_id, idempotency_key)`, `payment_method = 'cash_on_delivery'`, and server-calculated `subtotal` and `total_amount` values.
 
