@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { formatCurrency } from '../utils/currency.js';
 import { AddToCartButton } from './AddToCartButton.jsx';
 import { ProductImage } from './ProductImage.jsx';
+import { StockIndicator } from './ui/StockIndicator.jsx';
 
 export function ProductCard({ product }) {
   return (
     <article className="product-card group">
       <Link
-        className="relative block aspect-[4/5] overflow-hidden bg-sage"
+        className="relative block aspect-[4/5] overflow-hidden bg-brand-soft"
         to={`/products/${product.id}`}
         aria-label={`View ${product.name}`}
       >
@@ -26,7 +27,7 @@ export function ProductCard({ product }) {
           <ArrowUpRight size={17} aria-hidden="true" />
         </span>
       </Link>
-      <div className="pt-4">
+      <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[0.64rem] font-bold uppercase tracking-[0.17em] text-clay">
@@ -42,6 +43,7 @@ export function ProductCard({ product }) {
             {formatCurrency(product.price)}
           </p>
         </div>
+        <StockIndicator className="mt-4" stockQuantity={product.stock_quantity} />
         <AddToCartButton
           product={product}
           compact

@@ -8,6 +8,7 @@ const product = {
   id: '20000000-0000-4000-8000-000000000001',
   name: 'Blush Garden Bouquet',
   price: 1890,
+  stock_quantity: 4,
   image_url: null,
   featured: true,
   category: { name: 'Flowers', slug: 'flowers' },
@@ -26,6 +27,7 @@ describe('ProductCard', () => {
     expect(screen.getByText('Blush Garden Bouquet')).toBeInTheDocument();
     expect(screen.getByText('₱1,890')).toBeInTheDocument();
     expect(screen.getByText('Haven favorite')).toBeInTheDocument();
+    expect(screen.getByText('Only 4 left')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'View Blush Garden Bouquet' }),
     ).toHaveAttribute('href', `/products/${product.id}`);

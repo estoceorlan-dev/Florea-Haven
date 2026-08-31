@@ -1,6 +1,23 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Semantic palette: these names are the contract for new UI work. */
+  --color-canvas: #fffaf8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fff1f5;
+  --color-text: #3d2a31;
+  --color-text-muted: #705b63;
+  --color-brand: #985168;
+  --color-brand-soft: #f8e4ea;
+  --color-brand-strong: #74374d;
+  --color-floral-accent: #b85f7a;
+  --color-success: #39705a;
+  --color-warning: #8a5a18;
+  --color-danger: #9b405f;
+  --color-border: #ead9df;
+  --color-border-strong: #d6b6c1;
+
+  /* Legacy aliases remain while page-level styles migrate incrementally. */
   --color-ivory: #fffaf8;
   --color-mist: #fff1f5;
   --color-sage: #f5dce4;
@@ -11,9 +28,34 @@
   --color-ink: #3d2a31;
   --font-display: 'Iowan Old Style', 'Baskerville', 'Times New Roman', serif;
   --font-sans: 'Avenir Next', 'Segoe UI', Arial, sans-serif;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-overlay: 1rem;
+  --shadow-low: 0 1px 2px rgb(61 42 49 / 0.04), 0 8px 24px rgb(152 81 104 / 0.05);
+  --shadow-medium: 0 16px 40px rgb(61 42 49 / 0.11);
+  --shadow-overlay: 0 24px 64px rgb(61 42 49 / 0.18);
 }
 
 @layer base {
+  :root {
+    --page-gutter: 1rem;
+    --content-storefront: 80rem;
+    --content-readable: 42rem;
+    --motion-fast: 140ms;
+    --motion-standard: 220ms;
+    --motion-slow: 300ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --layer-announcement: 20;
+    --layer-app-bar: 40;
+    --layer-dropdown: 45;
+    --layer-backdrop: 50;
+    --layer-drawer: 60;
+    --layer-toast: 70;
+    --layer-modal: 80;
+  }
+
   * {
     box-sizing: border-box;
   }
@@ -25,8 +67,8 @@
   body {
     margin: 0;
     min-width: 320px;
-    background: var(--color-ivory);
-    color: var(--color-ink);
+    background: var(--color-canvas);
+    color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
@@ -60,7 +102,7 @@
 
 @layer components {
   .page-shell {
-    width: min(100% - 2rem, 1280px);
+    width: min(100% - (var(--page-gutter) * 2), var(--content-storefront));
     margin-inline: auto;
   }
 
@@ -164,9 +206,17 @@
     letter-spacing: 0.11em;
     text-transform: uppercase;
     transition:
-      background 180ms ease,
-      color 180ms ease,
-      border-color 180ms ease;
+      background var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard);
+  }
+
+  .button-primary:active,
+  .button-secondary:active,
+  .button-quiet:active {
+    transform: translateY(1px);
   }
 
   .button-primary {
@@ -181,8 +231,9 @@
   }
 
   .button-primary:disabled,
-  .button-secondary:disabled {
-    cursor: wait;
+  .button-secondary:disabled,
+  .button-quiet:disabled {
+    cursor: not-allowed;
     opacity: 0.6;
   }
 
@@ -227,6 +278,102 @@
     aspect-ratio: 4 / 5;
     overflow: hidden;
     background: var(--color-sage);
+  }
+
+  .product-card {
+    overflow: clip;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-low);
+    transition:
+      border-color var(--motion-standard) var(--ease-standard),
+      box-shadow var(--motion-standard) var(--ease-standard),
+      transform var(--motion-standard) var(--ease-standard);
+  }
+
+  .product-card:hover,
+  .product-card:focus-within {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-3px);
+  }
+
+  .stock-indicator {
+    display: inline-flex;
+    min-height: 1.75rem;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    padding: 0.3rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .stock-indicator-dot {
+    width: 0.42rem;
+    height: 0.42rem;
+    flex: none;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .stock-indicator[data-stock-state='available'] {
+    border-color: color-mix(in srgb, var(--color-success) 18%, transparent);
+    background: color-mix(in srgb, var(--color-success) 7%, transparent);
+    color: var(--color-success);
+  }
+
+  .stock-indicator[data-stock-state='low'] {
+    border-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    color: var(--color-warning);
+  }
+
+  .stock-indicator[data-stock-state='unavailable'] {
+    border-color: color-mix(in srgb, var(--color-danger) 18%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 7%, transparent);
+    color: var(--color-danger);
+  }
+
+  .stock-indicator[data-stock-state='loading'] {
+    border-color: var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+  }
+
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--color-brand-soft) 72%, var(--color-surface));
+  }
+
+  .skeleton::after {
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--color-surface) 72%, transparent),
+      transparent
+    );
+    content: '';
+    animation: skeleton-shimmer 1.65s var(--ease-standard) infinite;
+  }
+
+  .motion-lift {
+    transition:
+      transform var(--motion-standard) var(--ease-standard),
+      box-shadow var(--motion-standard) var(--ease-standard),
+      border-color var(--motion-standard) var(--ease-standard);
+  }
+
+  .motion-lift:hover,
+  .motion-lift:focus-within {
+    transform: translateY(-3px);
   }
 
   .product-grid {
@@ -362,8 +509,12 @@
 }
 
 @media (min-width: 640px) {
+  :root {
+    --page-gutter: 1.5rem;
+  }
+
   .page-shell {
-    width: min(100% - 3rem, 1280px);
+    width: min(100% - (var(--page-gutter) * 2), var(--content-storefront));
   }
 
   .product-grid {
@@ -372,8 +523,12 @@
 }
 
 @media (min-width: 1024px) {
+  :root {
+    --page-gutter: 2.5rem;
+  }
+
   .page-shell {
-    width: min(100% - 5rem, 1280px);
+    width: min(100% - (var(--page-gutter) * 2), var(--content-storefront));
   }
 
   .product-grid {
@@ -383,6 +538,12 @@
 
   .featured-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
   }
 }
 

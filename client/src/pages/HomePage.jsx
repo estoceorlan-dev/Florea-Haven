@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/ProductGridSkeleton.jsx';
+import { CategoryCardSkeleton } from '../components/ui/Skeleton.jsx';
 import { useAsync } from '../hooks/useAsync.js';
 import { catalogApi } from '../services/api.js';
 
@@ -89,9 +90,15 @@ export function HomePage() {
         </div>
 
         {categories.isLoading && (
-          <div className="grid gap-5 md:grid-cols-3">
+          <div
+            className="grid gap-5 md:grid-cols-3"
+            role="status"
+            aria-label="Loading collections"
+            aria-busy="true"
+          >
+            <span className="sr-only">Loading collections</span>
             {Array.from({ length: 3 }, (_, index) => (
-              <div key={index} className="aspect-[4/5] animate-pulse bg-evergreen/10" />
+              <CategoryCardSkeleton key={index} />
             ))}
           </div>
         )}

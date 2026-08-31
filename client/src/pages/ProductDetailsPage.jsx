@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { AddToCartButton } from '../components/AddToCartButton.jsx';
 import { ProductImage } from '../components/ProductImage.jsx';
+import { Skeleton } from '../components/ui/Skeleton.jsx';
+import { StockIndicator } from '../components/ui/StockIndicator.jsx';
 import { useAsync } from '../hooks/useAsync.js';
 import { catalogApi } from '../services/api.js';
 import { formatCurrency } from '../utils/currency.js';
@@ -13,13 +15,20 @@ export function ProductDetailsPage() {
 
   if (product.isLoading) {
     return (
-      <div className="page-shell grid animate-pulse gap-10 py-10 md:grid-cols-2 md:py-16">
-        <div className="aspect-[4/5] bg-evergreen/10" />
+      <div
+        className="page-shell grid gap-10 py-10 md:grid-cols-2 md:py-16"
+        role="status"
+        aria-label="Loading product details"
+        aria-busy="true"
+      >
+        <span className="sr-only">Loading product details</span>
+        <Skeleton className="aspect-[4/5] rounded-card" />
         <div className="py-8">
-          <div className="h-3 w-24 rounded bg-evergreen/10" />
-          <div className="mt-5 h-14 w-4/5 rounded bg-evergreen/10" />
-          <div className="mt-7 h-5 w-28 rounded bg-evergreen/10" />
-          <div className="mt-10 h-24 rounded bg-evergreen/10" />
+          <Skeleton className="h-3 w-24 rounded-control" />
+          <Skeleton className="mt-5 h-14 w-4/5 rounded-control" />
+          <Skeleton className="mt-7 h-5 w-28 rounded-control" />
+          <Skeleton className="mt-10 h-24 rounded-card" />
+          <Skeleton className="mt-8 h-12 w-full rounded-control" />
         </div>
       </div>
     );
@@ -80,12 +89,7 @@ export function ProductDetailsPage() {
             <div className="mt-8 h-px bg-evergreen/12" />
             <p className="mt-8 text-base leading-8 text-ink/65">{item.description}</p>
 
-            <div className="mt-8 flex items-center gap-2 text-sm text-evergreen">
-              <span className="size-2 rounded-full bg-leaf" />
-              {item.stock_quantity > 5
-                ? 'In stock and ready to be prepared'
-                : `Only ${item.stock_quantity} left in the Haven`}
-            </div>
+            <StockIndicator className="mt-8" stockQuantity={item.stock_quantity} />
 
             <div className="mt-9 border border-evergreen/15 bg-white p-5">
               <AddToCartButton product={item} className="button-primary w-full" />

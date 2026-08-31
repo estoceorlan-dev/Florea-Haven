@@ -92,6 +92,7 @@ describe('catalog pages', () => {
       await screen.findByRole('heading', { name: 'Blush Garden Bouquet' }),
     ).toBeInTheDocument();
     expect(screen.getByText('₱1,890')).toBeInTheDocument();
+    expect(screen.getByText('14 in stock')).toBeInTheDocument();
     expect(screen.getByText(/Product code/)).toHaveTextContent('FLW-BLS-001');
   });
 });
