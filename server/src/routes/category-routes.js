@@ -1,5 +1,17 @@
 import { Router } from 'express';
 import { query } from '../db/database.js';
+import { authenticate, requireAdmin } from '../middleware/auth-middleware.js';
+import { verifyRequestOrigin } from '../middleware/origin-middleware.js';
+import {
+  createCategory,
+  deleteCategory,
+  updateCategory,
+} from '../services/admin-catalog-service.js';
+import {
+  createCategorySchema,
+  resourceIdSchema,
+  updateCategorySchema,
+} from '../validation/admin-catalog-schemas.js';
 
 export const categoryRouter = Router();
 
@@ -26,3 +38,37 @@ categoryRouter.get('/', async (request, response) => {
     })),
   });
 });
+
+categoryRouter.post(
+  '/',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const input = createCategorySchema.parse(request.body);
+    response.status(201).json({ data: await createCategory(input) });
+  },
+);
+
+categoryRouter.put(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const categoryId = resourceIdSchema.parse(request.params.id);
+    const input = updateCategorySchema.parse(request.body);
+    response.json({ data: await updateCategory(categoryId, input) });
+  },
+);
+
+categoryRouter.delete(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const categoryId = resourceIdSchema.parse(request.params.id);
+    response.json({ data: await deleteCategory(categoryId) });
+  },
+);

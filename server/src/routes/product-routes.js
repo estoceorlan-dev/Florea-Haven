@@ -1,7 +1,19 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { query } from '../db/database.js';
+import { authenticate, requireAdmin } from '../middleware/auth-middleware.js';
+import { verifyRequestOrigin } from '../middleware/origin-middleware.js';
+import {
+  createProduct,
+  deactivateProduct,
+  updateProduct,
+} from '../services/admin-catalog-service.js';
 import { HttpError } from '../utils/http-error.js';
+import {
+  createProductSchema,
+  resourceIdSchema,
+  updateProductSchema,
+} from '../validation/admin-catalog-schemas.js';
 
 const listQuerySchema = z
   .object({
@@ -58,6 +70,40 @@ const mapProduct = (row) => ({
 });
 
 export const productRouter = Router();
+
+productRouter.post(
+  '/',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const input = createProductSchema.parse(request.body);
+    response.status(201).json({ data: await createProduct(input) });
+  },
+);
+
+productRouter.put(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const productId = resourceIdSchema.parse(request.params.id);
+    const input = updateProductSchema.parse(request.body);
+    response.json({ data: await updateProduct(productId, input) });
+  },
+);
+
+productRouter.delete(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  verifyRequestOrigin,
+  async (request, response) => {
+    const productId = resourceIdSchema.parse(request.params.id);
+    response.json({ data: await deactivateProduct(productId) });
+  },
+);
 
 productRouter.get('/', async (request, response) => {
   const filters = listQuerySchema.parse(request.query);

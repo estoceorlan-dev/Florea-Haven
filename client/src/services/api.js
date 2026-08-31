@@ -66,6 +66,17 @@ export const catalogApi = {
   getProduct: (id) => request(`/api/products/${id}`),
 };
 
+export const adminCatalogApi = {
+  getCategories: () => request('/api/admin/categories'),
+  createCategory: (input) => jsonRequest('/api/categories', 'POST', input),
+  updateCategory: (id, input) => jsonRequest(`/api/categories/${id}`, 'PUT', input),
+  deleteCategory: (id) => request(`/api/categories/${id}`, { method: 'DELETE' }),
+  getProducts: (params = {}) => request(`/api/admin/products${toQueryString(params)}`),
+  createProduct: (input) => jsonRequest('/api/products', 'POST', input),
+  updateProduct: (id, input) => jsonRequest(`/api/products/${id}`, 'PUT', input),
+  deactivateProduct: (id) => request(`/api/products/${id}`, { method: 'DELETE' }),
+};
+
 export const authApi = {
   register: (input) => jsonRequest('/api/auth/register', 'POST', input),
   login: (input) => jsonRequest('/api/auth/login', 'POST', input),

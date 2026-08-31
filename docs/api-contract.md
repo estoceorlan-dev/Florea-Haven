@@ -95,12 +95,14 @@ Every state-changing browser endpoint performs request-origin validation. In pro
 | `POST /api/orders`                 | Customer; own cart            | Implemented |
 | `GET /api/orders`                  | Customer; own orders          | Implemented |
 | `GET /api/orders/:id`              | Customer; owner only          | Implemented |
-| `POST /api/categories`             | Admin                         | Planned     |
-| `PUT /api/categories/:id`          | Admin                         | Planned     |
-| `DELETE /api/categories/:id`       | Admin                         | Planned     |
-| `POST /api/products`               | Admin                         | Planned     |
-| `PUT /api/products/:id`            | Admin                         | Planned     |
-| `DELETE /api/products/:id`         | Admin                         | Planned     |
+| `GET /api/admin/categories`        | Admin                         | Implemented |
+| `GET /api/admin/products`          | Admin                         | Implemented |
+| `POST /api/categories`             | Admin                         | Implemented |
+| `PUT /api/categories/:id`          | Admin                         | Implemented |
+| `DELETE /api/categories/:id`       | Admin                         | Implemented |
+| `POST /api/products`               | Admin                         | Implemented |
+| `PUT /api/products/:id`            | Admin                         | Implemented |
+| `DELETE /api/products/:id`         | Admin                         | Implemented |
 | `GET /api/admin/orders`            | Admin                         | Planned     |
 | `GET /api/admin/orders/:id`        | Admin                         | Planned     |
 | `PUT /api/admin/orders/:id/status` | Admin                         | Planned     |
@@ -211,11 +213,16 @@ The API rejects an empty cart, stale cart revision, inactive product, changed/in
 
 `GET /api/orders` supports `page` and `limit` using the catalog pagination bounds. `GET /api/orders/:id` returns `404 ORDER_NOT_FOUND` both for a missing order and for an order owned by another customer, avoiding ownership disclosure.
 
-## Planned administration rules
+## Implemented catalog administration rules
 
 - Category names and slugs are trimmed and unique case-insensitively. Deleting a category referenced by any product returns `409 CATEGORY_IN_USE`.
 - Product names are 2–120 characters; descriptions are 1–5,000 characters; prices are PHP values from 0 through 9,999,999.99; stock is an integer at least zero; category IDs are UUIDs; and image URLs, when supplied, must be absolute HTTP(S) URLs.
 - Product and category removal preserves every historical order snapshot.
+
+`GET /api/admin/products` supports `search`, `category` (UUID), `status` (`all`, `active`, or `inactive`), `sort` (`newest`, `name-asc`, `stock-asc`, or `stock-desc`), `page`, and `limit`. `DELETE /api/products/:id` is a soft deactivation; an administrator can reactivate the product by sending `{ "isActive": true }` to `PUT /api/products/:id`.
+
+## Planned order administration rules
+
 - New orders begin at `pending`. The only status transitions are:
   - `pending` to `confirmed` or `cancelled`
   - `confirmed` to `preparing` or `cancelled`

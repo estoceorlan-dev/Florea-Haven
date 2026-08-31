@@ -1,6 +1,6 @@
 # Floréa Haven
 
-Floréa Haven is a full-stack storefront for seeds, flowers, and botanical perfumes. The current implementation covers the project foundation, public catalog, authentication, persistent shopping cart, checkout, and customer orders described in Phases 1–5 of the implementation plan.
+Floréa Haven is a full-stack storefront for seeds, flowers, and botanical perfumes. The current implementation covers the project foundation, public catalog, authentication, persistent shopping cart, checkout, customer orders, and administrator catalog management described in Phases 1–6 of the implementation plan.
 
 ## Requirements
 
@@ -19,11 +19,15 @@ The storefront opens at `http://localhost:5173` and the API runs at `http://loca
 
 ## Persistent PostgreSQL Setup
 
+On Windows, Docker Desktop uses WSL 2. If WSL is not installed, open PowerShell as Administrator, run `wsl --install`, restart Windows, then start Docker Desktop and accept its agreement once.
+
 1. Copy `.env.example` to `.env`.
-2. Start PostgreSQL using `docker compose up -d postgres`, or provide another PostgreSQL database.
-3. Run `npm run db:migrate`.
-4. Run `npm run db:seed`.
-5. Run `npm run dev`.
+2. Run `npm run db:setup` to start PostgreSQL, wait for it to become healthy, apply migrations, and load the sample catalog.
+3. Run `npm run dev`.
+
+The Docker database is published on `localhost:5433` by default so it can coexist with a native PostgreSQL installation on the standard port `5432`. To use a different host port, update both `POSTGRES_HOST_PORT` and the port in `DATABASE_URL` in your uncommitted `.env` file.
+
+Open `http://localhost:5173` for the storefront preview. The Vite development server proxies `/api` requests to the API at `http://localhost:4000`.
 
 Do not commit `.env` or production credentials.
 
@@ -47,6 +51,9 @@ The command safely creates an administrator or promotes and refreshes the creden
 | `npm run build`        | Create the production client build         |
 | `npm test`             | Run client and API tests                   |
 | `npm run lint`         | Lint both workspaces                       |
+| `npm run db:up`        | Start and health-check Docker PostgreSQL   |
+| `npm run db:down`      | Stop Docker PostgreSQL                     |
+| `npm run db:setup`     | Start, migrate, and seed Docker PostgreSQL |
 | `npm run db:migrate`   | Apply pending PostgreSQL migrations        |
 | `npm run db:seed`      | Add or refresh sample catalog data         |
 | `npm run admin:create` | Create or update the initial administrator |
@@ -69,6 +76,14 @@ DELETE /api/cart/items/:id
 POST /api/orders
 GET /api/orders
 GET /api/orders/:id
+GET /api/admin/categories
+GET /api/admin/products
+POST /api/categories
+PUT /api/categories/:id
+DELETE /api/categories/:id
+POST /api/products
+PUT /api/products/:id
+DELETE /api/products/:id
 ```
 
 Product-list query parameters include `search`, `category`, `minPrice`, `maxPrice`, `sort`, `page`, and `limit`.
@@ -96,4 +111,4 @@ The baseline fixes the MVP to Cash on Delivery, signed-in persistent carts, thre
 
 ## Current Scope
 
-Catalog and order administration tools are intentionally deferred to their later implementation phases. The `/admin` route is role-protected now and provides a safe placeholder for those future tools.
+Administrators can manage categories, products, visibility, featured placement, prices, images, and inventory from the role-protected `/admin` workspace. Administrator order fulfillment remains deferred to Phase 7.

@@ -324,25 +324,25 @@ Allow administrators to maintain the catalog without direct database access.
 
 ### Backend
 
-- [ ] Implement protected category create, update, and delete endpoints.
-- [ ] Implement protected product create, update, and deactivate endpoints.
-- [ ] Validate names, descriptions, prices, stock, categories, and image URLs.
-- [ ] Reject category deletion with `CATEGORY_IN_USE` when any product references it.
-- [ ] Preserve historical order data when a product is deactivated or deleted.
+- [x] Implement protected category create, update, and delete endpoints.
+- [x] Implement protected product create, update, and deactivate endpoints.
+- [x] Validate names, descriptions, prices, stock, categories, and image URLs.
+- [x] Reject category deletion with `CATEGORY_IN_USE` when any product references it.
+- [x] Preserve historical order data when a product is deactivated or deleted.
 
 ### Frontend
 
-- [ ] Build an admin dashboard shell and navigation.
-- [ ] Build category list and form views.
-- [ ] Build product list, search, filter, create, and edit views.
-- [ ] Add inventory adjustment controls with clear validation.
-- [ ] Add confirmation for destructive actions and success/error feedback.
+- [x] Build an admin dashboard shell and navigation.
+- [x] Build category list and form views.
+- [x] Build product list, search, filter, create, and edit views.
+- [x] Add inventory adjustment controls with clear validation.
+- [x] Add confirmation for destructive actions and success/error feedback.
 
 ### Tests
 
-- [ ] Test every endpoint as an administrator, customer, and unauthenticated visitor.
-- [ ] Test invalid prices, negative stock, missing categories, and duplicate category names.
-- [ ] Verify catalog changes appear correctly in the customer interface.
+- [x] Test every endpoint as an administrator, customer, and unauthenticated visitor.
+- [x] Test invalid prices, negative stock, missing categories, and duplicate category names.
+- [x] Verify catalog changes appear correctly in the customer interface.
 
 ### Exit Criteria
 

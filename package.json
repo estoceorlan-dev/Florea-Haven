@@ -14,6 +14,9 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{js,jsx,json,md,yml,yaml,css}\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{js,jsx,json,md,yml,yaml,css}\" --ignore-path .prettierignore",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose down",
+    "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed",
     "db:migrate": "npm run db:migrate --workspace server",
     "db:seed": "npm run db:seed --workspace server",
     "admin:create": "npm run admin:create --workspace server"
