@@ -1,4 +1,11 @@
-import { LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-react';
+import {
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Store,
+  Tags,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
@@ -6,6 +13,7 @@ import { BrandMark } from './BrandMark.jsx';
 
 const navigation = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard, end: true },
+  { label: 'Orders', to: '/admin/orders', icon: ClipboardList },
   { label: 'Products', to: '/admin/products', icon: Package },
   { label: 'Categories', to: '/admin/categories', icon: Tags },
   { label: 'Storefront', to: '/products', icon: Store },

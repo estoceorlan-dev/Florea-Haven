@@ -103,9 +103,9 @@ Every state-changing browser endpoint performs request-origin validation. In pro
 | `POST /api/products`               | Admin                         | Implemented |
 | `PUT /api/products/:id`            | Admin                         | Implemented |
 | `DELETE /api/products/:id`         | Admin                         | Implemented |
-| `GET /api/admin/orders`            | Admin                         | Planned     |
-| `GET /api/admin/orders/:id`        | Admin                         | Planned     |
-| `PUT /api/admin/orders/:id/status` | Admin                         | Planned     |
+| `GET /api/admin/orders`            | Admin                         | Implemented |
+| `GET /api/admin/orders/:id`        | Admin                         | Implemented |
+| `PUT /api/admin/orders/:id/status` | Admin                         | Implemented |
 
 `DELETE /api/products/:id` safely deactivates a product; it does not erase order history. `DELETE /api/categories/:id` succeeds only when no product references the category and otherwise returns `409 CATEGORY_IN_USE`.
 
@@ -221,7 +221,13 @@ The API rejects an empty cart, stale cart revision, inactive product, changed/in
 
 `GET /api/admin/products` supports `search`, `category` (UUID), `status` (`all`, `active`, or `inactive`), `sort` (`newest`, `name-asc`, `stock-asc`, or `stock-desc`), `page`, and `limit`. `DELETE /api/products/:id` is a soft deactivation; an administrator can reactivate the product by sending `{ "isActive": true }` to `PUT /api/products/:id`.
 
-## Planned order administration rules
+## Implemented order administration rules
+
+`GET /api/admin/orders` supports `search` (partial order UUID), `customer`
+(partial customer name or email), `status`, `dateFrom`, `dateTo`, `page`, and
+`limit`. Dates use `YYYY-MM-DD` and form an inclusive calendar-day range.
+List and detail responses include the customer's ID, name, and email; detail
+responses also include the immutable item and delivery-address snapshots.
 
 - New orders begin at `pending`. The only status transitions are:
   - `pending` to `confirmed` or `cancelled`
@@ -230,3 +236,4 @@ The API rejects an empty cart, stale cart revision, inactive product, changed/in
   - `shipped` to `delivered`
 - `delivered` and `cancelled` are terminal. Skips, reversals, and cancellation after preparation return `409 INVALID_STATUS_TRANSITION`.
 - A valid transition to `cancelled` restores the order's item quantities exactly once in the same database transaction as the status change.
+- Every valid change updates both `status_updated_at` and `updated_at`.

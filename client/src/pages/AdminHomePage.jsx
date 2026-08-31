@@ -1,8 +1,22 @@
-import { ArrowRight, Package, ShieldCheck, Store, Tags } from 'lucide-react';
+import {
+  ArrowRight,
+  ClipboardList,
+  Package,
+  ShieldCheck,
+  Store,
+  Tags,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 
 const tools = [
+  {
+    title: 'Customer orders',
+    description: 'Review delivery details and progress new orders through fulfillment.',
+    to: '/admin/orders',
+    label: 'Manage orders',
+    icon: ClipboardList,
+  },
   {
     title: 'Products & inventory',
     description: 'Create products, refine listings, and keep stock levels accurate.',
@@ -51,7 +65,7 @@ export function AdminHomePage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
+      <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {tools.map(({ title, description, to, label, icon: Icon }, index) => (
           <Link
             key={to}

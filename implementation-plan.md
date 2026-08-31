@@ -360,24 +360,24 @@ Give administrators the minimum operational tools needed to fulfill orders.
 
 ### Backend
 
-- [ ] Add a paginated admin order-list endpoint with status, date, and customer filters.
-- [ ] Add an admin order-detail endpoint.
-- [ ] Implement `PUT /api/admin/orders/:id/status` with allowed-transition validation and atomic stock restoration on cancellation.
-- [ ] Include the customer name and email required for fulfillment in the admin order-detail response.
-- [ ] Record each order's `status_updated_at`; defer a full actor audit trail.
+- [x] Add a paginated admin order-list endpoint with status, date, and customer filters.
+- [x] Add an admin order-detail endpoint.
+- [x] Implement `PUT /api/admin/orders/:id/status` with allowed-transition validation and atomic stock restoration on cancellation.
+- [x] Include the customer name and email required for fulfillment in the admin order-detail response.
+- [x] Record each order's `status_updated_at`; defer a full actor audit trail.
 
 ### Frontend
 
-- [ ] Build the admin orders table with search, filters, and pagination.
-- [ ] Build the admin order-details page.
-- [ ] Add status-update controls that show only legal next states.
-- [ ] Display fulfillment-relevant customer details within the admin order view; do not add standalone customer administration.
+- [x] Build the admin orders table with search, filters, and pagination.
+- [x] Build the admin order-details page.
+- [x] Add status-update controls that show only legal next states.
+- [x] Display fulfillment-relevant customer details within the admin order view; do not add standalone customer administration.
 
 ### Tests
 
-- [ ] Test legal and illegal status transitions.
-- [ ] Test administrator access and customer denial.
-- [ ] Verify customers see updated order status in their order history.
+- [x] Test legal and illegal status transitions.
+- [x] Test administrator access and customer denial.
+- [x] Verify customers see updated order status in their order history.
 
 ### Exit Criteria
 
@@ -545,7 +545,7 @@ Update this table as work advances.
 | 3. Authentication | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 4. Cart | Implemented | — | — | Automated checks pass; persistent PostgreSQL smoke test pending |
 | 5. Checkout and orders | Implemented | — | 2026-08-30 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
-| 6. Admin catalog | Not started | — | — | — |
-| 7. Admin orders | Not started | — | — | — |
+| 6. Admin catalog | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
+| 7. Admin orders | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 8. Hardening | Not started | — | — | — |
 | 9. Deployment | Not started | — | — | — |

@@ -5,6 +5,8 @@ import { StorefrontLayout } from './components/StorefrontLayout.jsx';
 import { AccountPage } from './pages/AccountPage.jsx';
 import { AdminCategoriesPage } from './pages/AdminCategoriesPage.jsx';
 import { AdminHomePage } from './pages/AdminHomePage.jsx';
+import { AdminOrderDetailPage } from './pages/AdminOrderDetailPage.jsx';
+import { AdminOrdersPage } from './pages/AdminOrdersPage.jsx';
 import { AdminProductsPage } from './pages/AdminProductsPage.jsx';
 import { CartPage } from './pages/CartPage.jsx';
 import { CheckoutPage } from './pages/CheckoutPage.jsx';
@@ -43,6 +45,8 @@ export default function App() {
       <Route element={<AdminRoute />}>
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<AdminHomePage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
         </Route>

@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error-middleware.js';
 import { adminCatalogRouter } from './routes/admin-catalog-routes.js';
+import { adminOrderRouter } from './routes/admin-order-routes.js';
 import { authRouter } from './routes/auth-routes.js';
 import { cartRouter } from './routes/cart-routes.js';
 import { categoryRouter } from './routes/category-routes.js';
@@ -37,6 +38,7 @@ export const createApp = () => {
   app.use('/api/cart', cartRouter);
   app.use('/api/orders', orderRouter);
   app.use('/api/admin', adminCatalogRouter);
+  app.use('/api/admin', adminOrderRouter);
   app.use('/api/categories', categoryRouter);
   app.use('/api/products', productRouter);
 

@@ -8,14 +8,22 @@ import { adminProductListSchema } from '../validation/admin-catalog-schemas.js';
 
 export const adminCatalogRouter = Router();
 
-adminCatalogRouter.use(authenticate, requireAdmin);
+adminCatalogRouter.get(
+  '/categories',
+  authenticate,
+  requireAdmin,
+  async (request, response) => {
+    response.json({ data: await listAdminCategories() });
+  },
+);
 
-adminCatalogRouter.get('/categories', async (request, response) => {
-  response.json({ data: await listAdminCategories() });
-});
-
-adminCatalogRouter.get('/products', async (request, response) => {
-  const filters = adminProductListSchema.parse(request.query);
-  const result = await listAdminProducts(filters);
-  response.json({ data: result.products, pagination: result.pagination });
-});
+adminCatalogRouter.get(
+  '/products',
+  authenticate,
+  requireAdmin,
+  async (request, response) => {
+    const filters = adminProductListSchema.parse(request.query);
+    const result = await listAdminProducts(filters);
+    response.json({ data: result.products, pagination: result.pagination });
+  },
+);

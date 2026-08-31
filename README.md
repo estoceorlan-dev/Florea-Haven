@@ -111,4 +111,8 @@ The baseline fixes the MVP to Cash on Delivery, signed-in persistent carts, thre
 
 ## Current Scope
 
-Administrators can manage categories, products, visibility, featured placement, prices, images, and inventory from the role-protected `/admin` workspace. Administrator order fulfillment remains deferred to Phase 7.
+Administrators can manage categories, products, visibility, featured placement,
+prices, images, inventory, and customer order fulfillment from the role-protected
+`/admin` workspace. Order operations include customer/date/status filtering,
+fulfillment details, validated status progression, and transactional inventory
+restoration on cancellation.

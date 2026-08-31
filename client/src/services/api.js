@@ -77,6 +77,13 @@ export const adminCatalogApi = {
   deactivateProduct: (id) => request(`/api/products/${id}`, { method: 'DELETE' }),
 };
 
+export const adminOrderApi = {
+  getOrders: (params = {}) => request(`/api/admin/orders${toQueryString(params)}`),
+  getOrder: (id) => request(`/api/admin/orders/${id}`),
+  updateStatus: (id, status) =>
+    jsonRequest(`/api/admin/orders/${id}/status`, 'PUT', { status }),
+};
+
 export const authApi = {
   register: (input) => jsonRequest('/api/auth/register', 'POST', input),
   login: (input) => jsonRequest('/api/auth/login', 'POST', input),
