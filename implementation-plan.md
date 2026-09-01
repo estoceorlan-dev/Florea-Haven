@@ -28,6 +28,8 @@ The MVP is complete when:
 - Checkout creates a complete order and safely reduces stock.
 - A customer can view only their own orders.
 - An administrator can manage categories, products, stock, and order status.
+- A signed-in customer can upload, replace, and remove their profile picture.
+- An administrator can upload, replace, and remove a product image.
 - Protected API endpoints reject unauthenticated or unauthorized requests.
 - Core workflows pass automated and manual tests.
 - The frontend, API, and managed PostgreSQL database work in production.
@@ -45,8 +47,9 @@ The MVP is complete when:
 | 5 | Checkout and customer orders | Phase 4 | A cart can become an order transactionally |
 | 6 | Admin catalog and inventory | Phase 3 | Admins can manage products and stock |
 | 7 | Admin order management | Phase 5 | Admins can review and update orders |
-| 8 | Quality and security hardening | Phases 2–7 | MVP is reliable, accessible, and secure |
-| 9 | Deployment and release | Phase 8 | Production MVP is live and verified |
+| 8 | Profile and product image uploads | Phases 3 and 6 | Customers and admins can upload the images they manage |
+| 9 | Quality and security hardening | Phases 2–8 | MVP is reliable, accessible, and secure |
+| 10 | Deployment and release | Phase 9 | Production MVP is live and verified |
 
 Phases 6 and 7 may overlap after their dependencies are complete, but a small team should still prefer finishing one phase at a time.
 
@@ -68,7 +71,7 @@ Remove decisions that could cause rework before writing application code.
 - [x] Use `pg`, parameterized SQL, and ordered SQL migration files consistently throughout the backend.
 - [x] Transport browser JWTs in a secure, HTTP-only, same-site cookie and verify request origins for state-changing operations.
 - [x] Define standard API response and error formats.
-- [x] Use administrator-provided HTTP(S) image URLs with a safe client placeholder.
+- [x] Use administrator-provided HTTP(S) image URLs with a safe client placeholder as the initial baseline; Phase 8 supersedes manual URLs with managed uploads.
 - [x] Support Node.js 22+ and npm 10+.
 
 ### Deliverables
@@ -386,7 +389,70 @@ Give administrators the minimum operational tools needed to fulfill orders.
 
 ---
 
-## 13. Phase 8 — Quality, Security, and User Experience Hardening
+## 13. Phase 8 — Profile and Product Image Uploads
+
+### Goal
+
+Let customers manage their own profile picture and let administrators manage each product's image without pasting external URLs.
+
+### Storage Decision
+
+- [ ] Use [Cloudinary](https://cloudinary.com/documentation/upload_images) as the recommended image storage and delivery service. It supports signed uploads, image transformations, and CDN delivery, which suit avatars and catalog images.
+- [ ] Use short-lived, server-generated upload signatures; never expose `CLOUDINARY_API_SECRET` to the React application.
+- [ ] Keep image files out of PostgreSQL. Store only the secure delivery URL and provider asset identifier needed to replace or delete an image.
+- [ ] Use separate provider folders or prefixes for `profile-images/` and `product-images/`, with generated names instead of original filenames.
+- [ ] If minimizing external services is more important than built-in image transformations, document [Vercel Blob](https://vercel.com/docs/vercel-blob/client-upload) as the alternative. Choose one provider before implementation and do not mix providers in the MVP.
+
+### Database and Configuration
+
+- [ ] Add nullable `profile_image_url` and `profile_image_public_id` fields to `users` through a migration.
+- [ ] Retain `products.image_url` for delivery and add a nullable `image_public_id` field for provider-side replacement and deletion.
+- [ ] Use the product name as its image alt text for the MVP and use the customer's name for their avatar; defer separately authored alt text.
+- [ ] Add provider configuration to `.env.example` and deployment documentation, including `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and server-only `CLOUDINARY_API_SECRET` when Cloudinary is selected.
+- [ ] Define a safe placeholder for users and products without an image.
+
+### Backend and Upload Security
+
+- [ ] Add `POST /api/uploads/signature` to create short-lived signed upload parameters for the requested purpose; require an admin role when the purpose is a product image.
+- [ ] Add `PUT` and `DELETE /api/users/me/profile-image` so a customer can save, replace, and remove only their own profile picture.
+- [ ] Add admin-only `PUT` and `DELETE /api/products/:id/image` endpoints to save, replace, and remove a product image.
+- [ ] Return the profile image metadata from `GET /api/auth/me` and product image metadata from the existing catalog/admin product responses.
+- [ ] Verify the provider response and confirm the expected asset type, account, folder/prefix, and ownership before saving image metadata.
+- [ ] Accept only JPEG, PNG, and WebP images; reject SVG, renamed non-images, and unsupported or animated content.
+- [ ] Enforce a 5 MB upload limit and a 4096×4096-pixel maximum both in the upload provider configuration and in server validation.
+- [ ] Re-encode images, strip unnecessary metadata, normalize them to bounded dimensions, and generate optimized avatar, card, and product-detail variants with automatic quality and format selection where supported.
+- [ ] Stop accepting arbitrary `imageUrl` values from product create/update requests after the managed upload flow is available.
+- [ ] Delete a replaced or removed provider asset only after the database update succeeds, and log enough metadata to retry failed cleanup without logging secrets.
+- [ ] Add a documented orphan-cleanup procedure for uploads that succeed at the provider but are never attached to a user or product.
+- [ ] Apply rate limits to signature/finalization endpoints and return the standard API error format for invalid files or provider failures.
+- [ ] Update `docs/api-contract.md` with the upload, finalization, removal, authorization, validation, and error contracts.
+
+### Frontend
+
+- [ ] Build an authenticated profile/settings view with current-avatar display, file selection, preview, upload progress, replace, remove, and error states.
+- [ ] Show the customer's avatar in the account/navigation UI with a reliable fallback.
+- [ ] Replace the admin product form's manual image-URL workflow with image selection, preview, upload progress, replace, remove, and validation feedback.
+- [ ] Preserve the existing product image if a product edit or replacement upload fails.
+- [ ] Use responsive image variants, explicit dimensions, and lazy loading outside the initial viewport to reduce layout shift and bandwidth.
+
+### Tests
+
+- [ ] Test authorization so customers can modify only their own profile image and only admins can modify product images.
+- [ ] Test valid upload, replacement, removal, missing image, provider failure, and failed provider cleanup paths.
+- [ ] Test spoofed MIME types, unsupported formats, oversized files, excessive dimensions, forged provider identifiers, and expired signatures.
+- [ ] Test avatar and product-image preview, progress, fallback, validation, and retry states in the UI.
+- [ ] Manually verify optimized image delivery on mobile and desktop and confirm secrets never appear in browser code, API responses, or logs.
+
+### Exit Criteria
+
+- A signed-in customer can upload, replace, and remove only their profile picture.
+- An administrator can upload, replace, and remove product images through the product interface.
+- Uploaded images are validated, optimized, delivered from the chosen cloud provider, and represented in PostgreSQL only by metadata.
+- Unauthorized uploads, forged asset references, and invalid image files are rejected safely.
+
+---
+
+## 14. Phase 9 — Quality, Security, and User Experience Hardening
 
 ### Goal
 
@@ -420,7 +486,7 @@ Turn the feature-complete application into a release candidate.
 ### Performance and Operations
 
 - [ ] Confirm database queries use indexes and avoid unnecessary repeated queries.
-- [ ] Optimize product images and lazy-load non-critical images.
+- [ ] Verify profile and product image variants are optimized, correctly cached, and lazy-loaded when non-critical.
 - [ ] Add production-safe structured logging and error monitoring if available.
 - [ ] Document backup and restore expectations for the managed database.
 
@@ -432,7 +498,7 @@ Turn the feature-complete application into a release candidate.
 
 ---
 
-## 14. Phase 9 — Deployment and MVP Release
+## 15. Phase 10 — Deployment and MVP Release
 
 ### Goal
 
@@ -442,6 +508,7 @@ Deploy a production-ready build and verify it in the actual hosting environment.
 
 - [ ] Provision production PostgreSQL in a region suitable for the deployment.
 - [ ] Configure production environment variables in Vercel.
+- [ ] Provision the selected image provider and configure its production credentials, upload restrictions, folders/prefixes, and allowed origins.
 - [ ] Configure the React frontend and Node/Express API for the selected Vercel deployment model.
 - [ ] Confirm database connection handling is suitable for serverless execution, using pooling where required.
 - [ ] Configure production CORS, cookie domain/security, API URLs, and allowed origins.
@@ -451,7 +518,7 @@ Deploy a production-ready build and verify it in the actual hosting environment.
 - [ ] Run production migrations through a documented, controlled process.
 - [ ] Seed only required reference data and create the initial administrator securely.
 - [ ] Build and deploy a staging/preview version first.
-- [ ] Run smoke tests for health, catalog, authentication, cart, checkout, customer orders, and admin operations.
+- [ ] Run smoke tests for health, catalog, authentication, cart, checkout, customer orders, profile images, product images, and admin operations.
 - [ ] Deploy production and repeat the smoke tests.
 - [ ] Verify HTTPS, error logs, and database connectivity.
 - [ ] Tag the release and record rollback steps.
@@ -470,7 +537,7 @@ Deploy a production-ready build and verify it in the actual hosting environment.
 
 ---
 
-## 15. Suggested Test Pyramid
+## 16. Suggested Test Pyramid
 
 | Level | Focus | Run frequency |
 |---|---|---|
@@ -486,8 +553,9 @@ Minimum release-critical end-to-end journeys:
 2. Administrator signs in, updates stock, reviews the new order, and changes its status.
 3. Customer cannot access admin pages or APIs and cannot view another customer's cart or order.
 4. Checkout fails safely when stock changes and leaves no partial order or inventory update.
+5. A customer updates their profile picture, and an administrator uploads and replaces a product image without crossing authorization boundaries.
 
-## 16. Cross-Cutting Definition of Done
+## 17. Cross-Cutting Definition of Done
 
 A task is done only when:
 
@@ -501,7 +569,7 @@ A task is done only when:
 - [ ] The production build succeeds.
 - [ ] Another developer can verify the change from the documented steps.
 
-## 17. Recommended Work Order Within Each Phase
+## 18. Recommended Work Order Within Each Phase
 
 Use the same short loop for each feature:
 
@@ -516,14 +584,14 @@ Use the same short loop for each feature:
 
 This order exposes data-model and business-rule problems early while still ending each phase with a user-visible result.
 
-## 18. Deferred Enhancements
+## 19. Deferred Enhancements
 
 Start these only after the MVP release is stable:
 
 - Real payment gateway integration.
 - Guest carts and cart merging after login.
 - Product reviews, favorites, and recommendations.
-- Image upload and media management.
+- Multiple product images, drag-and-drop gallery ordering, cropping, and advanced media management.
 - Email or SMS order notifications.
 - Discount codes, promotions, and gift cards.
 - Delivery-provider integration or live tracking.
@@ -533,7 +601,7 @@ Start these only after the MVP release is stable:
 
 Each enhancement should be proposed as a new vertical slice with its own data changes, API contract, interface, tests, security review, and release criteria.
 
-## 19. Progress Tracker
+## 20. Progress Tracker
 
 Update this table as work advances.
 
@@ -547,5 +615,6 @@ Update this table as work advances.
 | 5. Checkout and orders | Implemented | — | 2026-08-30 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 6. Admin catalog | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 7. Admin orders | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
-| 8. Hardening | Not started | — | — | — |
-| 9. Deployment | Not started | — | — | — |
+| 8. Image uploads | Not started | — | — | Cloudinary recommended; provider decision required before implementation |
+| 9. Hardening | Not started | — | — | — |
+| 10. Deployment | Not started | — | — | — |

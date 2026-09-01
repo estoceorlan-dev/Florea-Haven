@@ -22,7 +22,12 @@ export function RegisterPage() {
 
   if (isLoading) return <SessionLoading />;
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/account'} replace />;
+    return (
+      <Navigate
+        to={returnPath ?? (user.role === 'admin' ? '/admin' : '/')}
+        replace
+      />
+    );
   }
 
   const fieldError = (field) =>
@@ -48,7 +53,7 @@ export function RegisterPage() {
 
     try {
       await register({ name: form.name, email: form.email, password: form.password });
-      navigate(returnPath ?? '/account', { replace: true });
+      navigate(returnPath ?? '/', { replace: true });
     } catch (submissionError) {
       setError(submissionError);
     } finally {

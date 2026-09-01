@@ -20,7 +20,12 @@ export function LoginPage() {
 
   if (isLoading) return <SessionLoading />;
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/account'} replace />;
+    return (
+      <Navigate
+        to={returnPath ?? (user.role === 'admin' ? '/admin' : '/')}
+        replace
+      />
+    );
   }
 
   const submit = async (event) => {
@@ -30,7 +35,7 @@ export function LoginPage() {
 
     try {
       const signedInUser = await login(form);
-      navigate(returnPath ?? (signedInUser.role === 'admin' ? '/admin' : '/account'), {
+      navigate(returnPath ?? (signedInUser.role === 'admin' ? '/admin' : '/'), {
         replace: true,
       });
     } catch (submissionError) {

@@ -32,10 +32,10 @@ const tools = [
     icon: Tags,
   },
   {
-    title: 'Storefront review',
+    title: 'Floréa Haven review',
     description: 'Check how active catalog changes appear to customers.',
     to: '/products',
-    label: 'View storefront',
+    label: 'View Floréa Haven',
     icon: Store,
   },
 ];

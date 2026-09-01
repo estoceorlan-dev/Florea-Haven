@@ -245,7 +245,7 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
             checked={values.featured}
             onChange={updateValue}
           />
-          Feature in the storefront
+          Feature on Home
         </label>
         {product && (
           <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-evergreen">

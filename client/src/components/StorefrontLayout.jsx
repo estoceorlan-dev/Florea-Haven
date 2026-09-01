@@ -1,9 +1,18 @@
-import { Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react';
-import { useState } from 'react';
+import {
+  LogOut,
+  Menu,
+  PackageOpen,
+  Search,
+  ShoppingBag,
+  UserRound,
+  X,
+} from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
 import { BrandMark } from './BrandMark.jsx';
+import { NavigationDrawer } from './ui/NavigationDrawer.jsx';
 import { ThemeSelector } from './ui/ThemeSelector.jsx';
 
 const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`;
@@ -12,10 +21,34 @@ export function StorefrontLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const menuButtonRef = useRef(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { cart } = useCart();
   const accountPath = user?.role === 'admin' ? '/admin' : user ? '/account' : '/login';
+  const firstName = user?.name.trim().split(/\s+/)[0];
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const toggleMenu = () => {
+    setSearchOpen(false);
+    setMenuOpen((open) => !open);
+  };
+
+  const toggleSearch = () => {
+    setMenuOpen(false);
+    setSearchOpen((open) => !open);
+  };
+
+  const signOut = async () => {
+    closeMenu();
+
+    try {
+      await logout();
+    } finally {
+      navigate('/', { replace: true });
+    }
+  };
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -38,11 +71,13 @@ export function StorefrontLayout() {
       <header className="sticky top-0 z-40 border-b border-evergreen/10 bg-canvas/95 backdrop-blur-xl">
         <div className="page-shell flex h-[76px] items-center justify-between gap-5">
           <button
+            ref={menuButtonRef}
             className="icon-button lg:hidden"
             type="button"
             aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
+            aria-controls="storefront-navigation-drawer"
+            onClick={toggleMenu}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -87,7 +122,7 @@ export function StorefrontLayout() {
               type="button"
               aria-label={searchOpen ? 'Close search' : 'Search products'}
               aria-expanded={searchOpen}
-              onClick={() => setSearchOpen((open) => !open)}
+              onClick={toggleSearch}
             >
               {searchOpen ? <X size={19} /> : <Search size={19} />}
             </button>
@@ -104,11 +139,19 @@ export function StorefrontLayout() {
               )}
             </Link>
             <Link
-              className="icon-button"
+              className="account-link"
               to={accountPath}
               aria-label={user ? `Open account for ${user.name}` : 'Sign in'}
             >
               <UserRound size={19} aria-hidden="true" />
+              <span className="hidden min-w-0 sm:block">
+                <span className="block text-[0.6rem] font-bold uppercase tracking-[0.12em] text-ink/45">
+                  {user ? 'Your account' : 'Welcome'}
+                </span>
+                <span className="block max-w-28 truncate text-xs font-semibold text-evergreen xl:max-w-36">
+                  {user ? `Hi, ${firstName}` : 'Sign in'}
+                </span>
+              </span>
             </Link>
           </div>
         </div>
@@ -138,42 +181,87 @@ export function StorefrontLayout() {
             </div>
           </form>
         )}
-
-        {menuOpen && (
-          <nav
-            className="absolute inset-x-0 top-full border-b border-evergreen/10 bg-canvas px-6 py-6 shadow-overlay lg:hidden"
-            aria-label="Mobile navigation"
-          >
-            <div className="flex flex-col">
-              {[
-                ['Home', '/'],
-                ['Shop all', '/products'],
-                ['Flowers', '/products?category=flowers'],
-                ['Seeds', '/products?category=seeds'],
-                ['Perfumes', '/products?category=perfumes'],
-                [
-                  user ? (user.role === 'admin' ? 'Admin' : 'My account') : 'Sign in',
-                  accountPath,
-                ],
-                ['Cart', '/cart'],
-                ...(user?.role === 'customer' ? [['My orders', '/orders']] : []),
-              ].map(([label, to]) => (
-                <Link
-                  className="border-b border-evergreen/10 py-3.5 font-display text-2xl"
-                  key={label}
-                  to={to}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            <div className="mt-6 border-t border-evergreen/10 pt-5">
-              <ThemeSelector />
-            </div>
-          </nav>
-        )}
       </header>
+
+      <NavigationDrawer
+        id="storefront-navigation-drawer"
+        label="Mobile navigation"
+        title="Explore"
+        open={menuOpen}
+        onClose={closeMenu}
+        returnFocusRef={menuButtonRef}
+      >
+        <div className="border-b border-border bg-surface-muted px-5 py-5">
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+              <UserRound size={20} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-text">
+                {user?.name ?? 'Welcome to Floréa Haven'}
+              </p>
+              <p className="mt-1 truncate text-xs text-text-muted">
+                {user?.email ?? 'Sign in to see your account and orders'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="px-3 py-4" aria-label="Store navigation">
+          {[
+            ['Home', '/'],
+            ['Shop all', '/products'],
+            ['Flowers', '/products?category=flowers'],
+            ['Seeds', '/products?category=seeds'],
+            ['Perfumes', '/products?category=perfumes'],
+          ].map(([label, to]) => (
+            <Link className="drawer-nav-link" key={label} to={to} onClick={closeMenu}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="mx-5 border-t border-border pt-4">
+          <p className="eyebrow mb-2 text-text-muted">Account</p>
+          {user ? (
+            <>
+              <Link className="drawer-action-link" to={accountPath} onClick={closeMenu}>
+                <UserRound size={18} aria-hidden="true" />
+                {user.role === 'admin' ? 'Administrator' : 'My account'}
+              </Link>
+              {user.role === 'customer' && (
+                <Link className="drawer-action-link" to="/orders" onClick={closeMenu}>
+                  <PackageOpen size={18} aria-hidden="true" />
+                  My orders
+                </Link>
+              )}
+            </>
+          ) : (
+            <Link className="drawer-action-link" to="/login" onClick={closeMenu}>
+              <UserRound size={18} aria-hidden="true" />
+              Sign in
+            </Link>
+          )}
+          <Link className="drawer-action-link" to="/cart" onClick={closeMenu}>
+            <ShoppingBag size={18} aria-hidden="true" />
+            Cart{cart.summary.item_count ? ` (${cart.summary.item_count})` : ''}
+          </Link>
+          {user && (
+            <button
+              className="drawer-action-link w-full"
+              type="button"
+              onClick={signOut}
+            >
+              <LogOut size={18} aria-hidden="true" />
+              Sign out
+            </button>
+          )}
+        </div>
+
+        <div className="mt-auto px-5 py-6">
+          <ThemeSelector />
+        </div>
+      </NavigationDrawer>
 
       <main id="main-content">
         <Outlet />

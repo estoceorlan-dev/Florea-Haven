@@ -12,7 +12,7 @@ export function AuthShell({ eyebrow, title, introduction, children }) {
           </Link>
           <Link className="text-link" to="/">
             <ArrowLeft size={14} aria-hidden="true" />
-            Storefront
+            Home
           </Link>
         </div>
 

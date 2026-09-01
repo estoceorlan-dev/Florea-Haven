@@ -13,6 +13,7 @@ const emptyCart = {
 };
 
 export function TestAppProviders({
+  authActions = {},
   children,
   user = null,
   cart = emptyCart,
@@ -28,6 +29,7 @@ export function TestAppProviders({
         register: async () => undefined,
         login: async () => undefined,
         logout: async () => undefined,
+        ...authActions,
       }}
     >
       <CartContext.Provider

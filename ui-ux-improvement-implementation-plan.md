@@ -1,6 +1,6 @@
 # Floréa Haven UI/UX Improvement Implementation Plan
 
-**Status:** In progress — Phase 1 handoff documented, Phase 2 foundation implemented, and Phase 3 code complete pending Figma and visual QA
+**Status:** In progress — Phases 2, 3, and 5 implemented in code; Figma and connected-browser visual QA remain pending
 **Scope:** Customer storefront, authentication, checkout, and administrator shell
 **Primary goal:** Evolve the existing interface into a modern, responsive, polished botanical-commerce experience while preserving Floréa Haven's soft pink floral and minimalist aesthetic, without changing the server's role as the authority for identity, pricing, inventory, carts, and orders.
 
@@ -410,13 +410,15 @@ Implementation note (2026-09-01): the production code and automated checks are c
 
 ### Phase 5 — Navigation, user identity, and auth flow
 
-- [ ] Modernize the customer app bar and mobile drawer.
-- [ ] Display the signed-in user's first name on desktop and full identity in the mobile drawer.
-- [ ] Convert the administrator desktop navigation to a sidebar.
-- [ ] Replace all user-facing `Storefront` labels.
-- [ ] Change direct customer login/registration redirects from `/account` to `/`.
-- [ ] Preserve safe protected-route returns and `/admin` for administrators.
-- [ ] Update routing/auth/navigation tests.
+- [x] Modernize the customer app bar and mobile drawer.
+- [x] Display the signed-in user's first name on desktop and full identity in the mobile drawer.
+- [x] Convert the administrator desktop navigation to a sidebar.
+- [x] Replace all user-facing `Storefront` labels.
+- [x] Change direct customer login/registration redirects from `/account` to `/`.
+- [x] Preserve safe protected-route returns and `/admin` for administrators.
+- [x] Update routing/auth/navigation tests.
+
+Implementation note (2026-09-01): both responsive shells, role-based landing rules, protected-route returns, terminology updates, and keyboard-safe drawer behavior are implemented and covered by automated tests. Connected-browser breakpoint QA remains part of the visual verification pass.
 
 **Exit gate:** All roles land in the correct location and navigation works by keyboard at every target breakpoint.
 
