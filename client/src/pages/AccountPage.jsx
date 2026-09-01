@@ -8,6 +8,7 @@ import {
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { ThemeSelector } from '../components/ui/ThemeSelector.jsx';
 
 export function AccountPage() {
   const { user, logout, sessionError } = useAuth();
@@ -44,7 +45,7 @@ export function AccountPage() {
           </div>
         )}
 
-        <div className="border border-evergreen/10 bg-white p-7 sm:p-10">
+        <div className="border border-evergreen/10 bg-surface p-7 shadow-low sm:p-10">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
             <div>
               <p className="eyebrow text-clay">Your account</p>
@@ -69,7 +70,7 @@ export function AccountPage() {
           </div>
 
           <div className="mt-10 grid gap-4 border-t border-evergreen/10 pt-8 sm:grid-cols-2">
-            <Link className="group bg-mist p-6" to="/orders">
+            <Link className="group bg-surface-muted p-6" to="/orders">
               <PackageOpen className="text-leaf" size={22} />
               <h2 className="mt-5 font-display text-2xl text-evergreen">
                 Order history
@@ -82,7 +83,10 @@ export function AccountPage() {
                 <ArrowRight size={13} />
               </span>
             </Link>
-            <Link className="group border border-evergreen/10 bg-white p-6" to="/cart">
+            <Link
+              className="group border border-evergreen/10 bg-surface p-6"
+              to="/cart"
+            >
               <ShoppingBag className="text-leaf" size={22} />
               <h2 className="mt-5 font-display text-2xl text-evergreen">Saved cart</h2>
               <p className="mt-2 text-sm leading-6 text-ink/60">
@@ -93,6 +97,16 @@ export function AccountPage() {
                 <ArrowRight size={13} />
               </span>
             </Link>
+          </div>
+
+          <div className="mt-8 grid gap-5 border-t border-evergreen/10 pt-8 sm:grid-cols-[1fr_minmax(15rem,19rem)] sm:items-end">
+            <div>
+              <h2 className="font-display text-2xl text-evergreen">Appearance</h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-ink/60">
+                Follow your device or choose a theme for Floréa Haven on this browser.
+              </p>
+            </div>
+            <ThemeSelector />
           </div>
         </div>
       </div>

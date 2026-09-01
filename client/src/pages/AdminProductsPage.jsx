@@ -95,7 +95,10 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
   };
 
   return (
-    <form className="border border-evergreen/10 bg-white p-6 sm:p-7" onSubmit={submit}>
+    <form
+      className="border border-evergreen/10 bg-surface p-6 sm:p-7"
+      onSubmit={submit}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow text-clay">
@@ -414,7 +417,7 @@ export function AdminProductsPage() {
 
       {notice && (
         <p
-          className="mt-6 border border-evergreen/15 bg-white px-4 py-3 text-sm text-evergreen"
+          className="mt-6 border border-evergreen/15 bg-surface px-4 py-3 text-sm text-evergreen"
           role="status"
         >
           {notice}
@@ -439,7 +442,7 @@ export function AdminProductsPage() {
       <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_27rem]">
         <div className="min-w-0">
           <form
-            className="grid gap-3 border border-evergreen/10 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(8rem,auto))]"
+            className="grid gap-3 border border-evergreen/10 bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(8rem,auto))]"
             aria-label="Filter products"
             onSubmit={(event) => {
               event.preventDefault();
@@ -510,7 +513,7 @@ export function AdminProductsPage() {
             </button>
           </form>
 
-          <div className="mt-5 overflow-hidden border border-evergreen/10 bg-white">
+          <div className="mt-5 overflow-hidden border border-evergreen/10 bg-surface">
             {isLoading ? (
               <div className="grid min-h-72 place-items-center" role="status">
                 <LoaderCircle className="animate-spin text-leaf" aria-hidden="true" />
@@ -669,7 +672,7 @@ export function AdminProductsPage() {
               onSubmit={saveProduct}
             />
           ) : (
-            <div className="border border-evergreen/10 bg-white p-7 text-sm leading-6 text-ink/55">
+            <div className="border border-evergreen/10 bg-surface p-7 text-sm leading-6 text-ink/55">
               Create a category before adding products.
             </div>
           )}

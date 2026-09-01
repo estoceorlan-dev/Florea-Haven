@@ -56,7 +56,7 @@ export function AdminHomePage() {
             customer visit.
           </p>
         </div>
-        <div className="flex items-center gap-3 border border-evergreen/10 bg-white px-5 py-4">
+        <div className="flex items-center gap-3 border border-evergreen/10 bg-surface px-5 py-4">
           <ShieldCheck className="text-leaf" size={22} strokeWidth={1.5} />
           <div>
             <p className="text-xs font-bold text-evergreen">Protected workspace</p>
@@ -71,8 +71,8 @@ export function AdminHomePage() {
             key={to}
             className={`group flex min-h-64 flex-col justify-between border p-7 transition hover:-translate-y-1 ${
               index === 0
-                ? 'border-evergreen bg-evergreen text-white'
-                : 'border-evergreen/10 bg-white text-ink'
+                ? 'border-evergreen bg-evergreen text-canvas'
+                : 'border-evergreen/10 bg-surface text-ink'
             }`}
             to={to}
           >
@@ -84,12 +84,12 @@ export function AdminHomePage() {
                 aria-hidden="true"
               />
               <h2
-                className={`mt-6 font-display text-3xl ${index === 0 ? 'text-white' : 'text-evergreen'}`}
+                className={`mt-6 font-display text-3xl ${index === 0 ? 'text-canvas' : 'text-evergreen'}`}
               >
                 {title}
               </h2>
               <p
-                className={`mt-3 text-sm leading-6 ${index === 0 ? 'text-white/70' : 'text-ink/55'}`}
+                className={`mt-3 text-sm leading-6 ${index === 0 ? 'text-canvas/70' : 'text-ink/55'}`}
               >
                 {description}
               </p>

@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
 import { BrandMark } from './BrandMark.jsx';
+import { ThemeSelector } from './ui/ThemeSelector.jsx';
 
 const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`;
 
@@ -25,7 +26,7 @@ export function StorefrontLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory text-ink">
+    <div className="min-h-screen bg-canvas text-text">
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -34,7 +35,7 @@ export function StorefrontLayout() {
         Cash on Delivery · Made gently in Metro Manila
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-evergreen/10 bg-ivory/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-evergreen/10 bg-canvas/95 backdrop-blur-xl">
         <div className="page-shell flex h-[76px] items-center justify-between gap-5">
           <button
             className="icon-button lg:hidden"
@@ -97,7 +98,7 @@ export function StorefrontLayout() {
             >
               <ShoppingBag size={19} aria-hidden="true" />
               {cart.summary.item_count > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-clay px-1 text-[0.56rem] font-bold leading-none text-white">
+                <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-clay px-1 text-[0.56rem] font-bold leading-none text-canvas">
                   {cart.summary.item_count > 99 ? '99+' : cart.summary.item_count}
                 </span>
               )}
@@ -114,7 +115,7 @@ export function StorefrontLayout() {
 
         {searchOpen && (
           <form
-            className="border-t border-evergreen/10 bg-white px-4 py-4"
+            className="border-t border-evergreen/10 bg-surface px-4 py-4"
             onSubmit={submitSearch}
             role="search"
           >
@@ -140,7 +141,7 @@ export function StorefrontLayout() {
 
         {menuOpen && (
           <nav
-            className="absolute inset-x-0 top-full border-b border-evergreen/10 bg-ivory px-6 py-6 shadow-xl lg:hidden"
+            className="absolute inset-x-0 top-full border-b border-evergreen/10 bg-canvas px-6 py-6 shadow-overlay lg:hidden"
             aria-label="Mobile navigation"
           >
             <div className="flex flex-col">
@@ -167,6 +168,9 @@ export function StorefrontLayout() {
                 </Link>
               ))}
             </div>
+            <div className="mt-6 border-t border-evergreen/10 pt-5">
+              <ThemeSelector />
+            </div>
           </nav>
         )}
       </header>
@@ -180,7 +184,7 @@ export function StorefrontLayout() {
           <div className="max-w-sm">
             <Link to="/" aria-label="Floréa Haven home">
               <span className="inline-flex items-center gap-2.5 text-ivory">
-                <span className="grid size-9 place-items-center rounded-full border border-ivory/25 bg-white/10">
+                <span className="grid size-9 place-items-center rounded-full border border-ivory/25 bg-canvas/10">
                   <span className="brand-sprout">F</span>
                 </span>
                 <span className="font-display text-[1.65rem] tracking-[-0.035em]">
@@ -197,16 +201,16 @@ export function StorefrontLayout() {
           <div>
             <p className="eyebrow text-blush">Explore</p>
             <div className="mt-5 flex flex-col gap-3 text-sm text-ivory/75">
-              <Link className="hover:text-white" to="/products">
+              <Link className="hover:text-canvas" to="/products">
                 Shop all
               </Link>
-              <Link className="hover:text-white" to="/products?category=flowers">
+              <Link className="hover:text-canvas" to="/products?category=flowers">
                 Fresh flowers
               </Link>
-              <Link className="hover:text-white" to="/products?category=seeds">
+              <Link className="hover:text-canvas" to="/products?category=seeds">
                 Garden seeds
               </Link>
-              <Link className="hover:text-white" to="/products?category=perfumes">
+              <Link className="hover:text-canvas" to="/products?category=perfumes">
                 Botanical perfumes
               </Link>
             </div>

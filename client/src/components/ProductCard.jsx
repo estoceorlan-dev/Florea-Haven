@@ -23,7 +23,7 @@ export function ProductCard({ product }) {
             Haven favorite
           </span>
         )}
-        <span className="absolute bottom-3 right-3 grid size-10 translate-y-2 place-items-center rounded-full bg-evergreen text-white opacity-0 shadow-lg transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+        <span className="absolute bottom-3 right-3 grid size-10 translate-y-2 place-items-center rounded-full bg-evergreen text-canvas opacity-0 shadow-lg transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
           <ArrowUpRight size={17} aria-hidden="true" />
         </span>
       </Link>

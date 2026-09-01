@@ -87,7 +87,7 @@ export function AdminOrdersPage() {
       </div>
 
       <form
-        className="mt-7 grid gap-3 border border-evergreen/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-5"
+        className="mt-7 grid gap-3 border border-evergreen/10 bg-surface p-4 md:grid-cols-2 xl:grid-cols-5"
         aria-label="Filter orders"
         onSubmit={applyFilters}
       >
@@ -179,7 +179,7 @@ export function AdminOrdersPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-hidden border border-evergreen/10 bg-white">
+      <div className="mt-5 overflow-hidden border border-evergreen/10 bg-surface">
         {isLoading ? (
           <div className="grid min-h-80 place-items-center" role="status">
             <LoaderCircle className="animate-spin text-leaf" aria-hidden="true" />

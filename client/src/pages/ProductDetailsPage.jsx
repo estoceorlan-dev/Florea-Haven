@@ -91,7 +91,7 @@ export function ProductDetailsPage() {
 
             <StockIndicator className="mt-8" stockQuantity={item.stock_quantity} />
 
-            <div className="mt-9 border border-evergreen/15 bg-white p-5">
+            <div className="mt-9 border border-evergreen/15 bg-surface p-5">
               <AddToCartButton product={item} className="button-primary w-full" />
               <p className="mt-3 text-center text-xs leading-5 text-ink/50">
                 Your cart is saved securely to your account. Checkout arrives in Phase

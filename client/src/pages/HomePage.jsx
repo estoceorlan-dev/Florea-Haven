@@ -122,7 +122,7 @@ export function HomePage() {
                     src={details.image}
                     alt=""
                   />
-                  <span className="absolute inset-0 bg-gradient-to-t from-evergreen/85 via-evergreen/5 to-transparent" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-image-overlay/90 via-image-overlay/5 to-transparent" />
                   <span className="absolute left-5 top-5 grid size-9 place-items-center rounded-full border border-white/40 text-xs text-white">
                     {details.number}
                   </span>
@@ -151,7 +151,7 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="bg-white py-20 md:py-28">
+      <section className="bg-surface py-20 md:py-28">
         <div className="page-shell">
           <div className="mb-10 flex items-end justify-between gap-4 md:mb-14">
             <div>

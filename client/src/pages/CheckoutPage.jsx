@@ -257,7 +257,7 @@ export function CheckoutPage() {
             />
           </div>
 
-          <div className="mt-8 flex gap-3 border border-evergreen/10 bg-white p-5 text-sm text-ink/60">
+          <div className="mt-8 flex gap-3 border border-evergreen/10 bg-surface p-5 text-sm text-ink/60">
             <Banknote className="mt-0.5 shrink-0 text-leaf" size={20} />
             <div>
               <strong className="block text-evergreen">Cash on Delivery</strong>

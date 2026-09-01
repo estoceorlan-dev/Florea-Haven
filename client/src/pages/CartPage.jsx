@@ -79,7 +79,7 @@ function CartItem({ item }) {
         )}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center border border-evergreen/15 bg-white">
+          <div className="inline-flex items-center border border-evergreen/15 bg-surface">
             <button
               className="grid size-9 place-items-center text-evergreen disabled:cursor-not-allowed disabled:opacity-30"
               type="button"

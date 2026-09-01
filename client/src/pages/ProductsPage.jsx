@@ -270,7 +270,7 @@ export function ProductsPage() {
               <InlineError error={products.error} onRetry={products.retry} />
             )}
             {products.data && products.data.data.length === 0 && (
-              <div className="border border-evergreen/10 bg-white px-6 py-16 text-center">
+              <div className="border border-evergreen/10 bg-surface px-6 py-16 text-center">
                 <p className="font-display text-3xl text-evergreen">
                   Nothing blooming here yet
                 </p>
@@ -332,7 +332,7 @@ export function ProductsPage() {
       </div>
 
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 bg-evergreen/30 backdrop-blur-sm md:hidden">
+        <div className="fixed inset-0 z-50 bg-backdrop backdrop-blur-sm md:hidden">
           <div className="absolute inset-y-0 right-0 w-[min(88vw,380px)] overflow-y-auto bg-ivory px-6 py-6 shadow-2xl">
             <div className="mb-9 flex items-center justify-between">
               <p className="font-display text-3xl text-evergreen">Filters</p>

@@ -58,7 +58,7 @@ export function OrderDetails({ order }) {
           </div>
         </div>
 
-        <div className="border border-evergreen/10 bg-white p-6">
+        <div className="border border-evergreen/10 bg-surface p-6">
           <div className="flex gap-3">
             <MapPin className="mt-0.5 shrink-0 text-leaf" size={18} />
             <div>
@@ -84,7 +84,7 @@ export function OrderDetails({ order }) {
           </div>
         </div>
 
-        <div className="grid gap-3 border border-evergreen/10 bg-white p-6 text-sm text-ink/60">
+        <div className="grid gap-3 border border-evergreen/10 bg-surface p-6 text-sm text-ink/60">
           <p className="flex items-center gap-3">
             <Banknote className="text-leaf" size={18} />
             Cash on Delivery

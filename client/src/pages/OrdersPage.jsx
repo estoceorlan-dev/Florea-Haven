@@ -68,7 +68,7 @@ export function OrdersPage() {
           <div className="mt-8 space-y-4">
             {data.map((order) => (
               <article
-                className="grid gap-5 border border-evergreen/10 bg-white p-6 sm:grid-cols-[1fr_auto] sm:items-center"
+                className="grid gap-5 border border-evergreen/10 bg-surface p-6 sm:grid-cols-[1fr_auto] sm:items-center"
                 key={order.id}
               >
                 <div>

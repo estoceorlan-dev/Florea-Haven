@@ -46,7 +46,10 @@ function CategoryForm({ category, onCancel, onSubmit }) {
   };
 
   return (
-    <form className="border border-evergreen/10 bg-white p-6 sm:p-7" onSubmit={submit}>
+    <form
+      className="border border-evergreen/10 bg-surface p-6 sm:p-7"
+      onSubmit={submit}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow text-clay">
@@ -216,7 +219,7 @@ export function AdminCategoriesPage() {
             protected from deletion.
           </p>
         </div>
-        <div className="flex items-center gap-3 border border-evergreen/10 bg-white px-4 py-3">
+        <div className="flex items-center gap-3 border border-evergreen/10 bg-surface px-4 py-3">
           <Tags className="text-leaf" size={19} aria-hidden="true" />
           <span className="text-sm font-bold text-evergreen">
             {categories.length} {categories.length === 1 ? 'category' : 'categories'}
@@ -226,7 +229,7 @@ export function AdminCategoriesPage() {
 
       {notice && (
         <p
-          className="mt-6 border border-evergreen/15 bg-white px-4 py-3 text-sm text-evergreen"
+          className="mt-6 border border-evergreen/15 bg-surface px-4 py-3 text-sm text-evergreen"
           role="status"
         >
           {notice}
@@ -249,7 +252,7 @@ export function AdminCategoriesPage() {
       )}
 
       <div className="mt-7 grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="border border-evergreen/10 bg-white">
+        <div className="border border-evergreen/10 bg-surface">
           <div className="border-b border-evergreen/10 px-5 py-4">
             <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-evergreen">
               Current collections

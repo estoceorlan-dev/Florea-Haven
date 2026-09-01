@@ -1,0 +1,83 @@
+{
+  "name": "Florea Haven semantic variables",
+  "version": 1,
+  "collections": {
+    "color": {
+      "modes": {
+        "light": {
+          "canvas": "#fffaf8",
+          "surface": "#ffffff",
+          "surface-muted": "#fff1f5",
+          "text": "#3d2a31",
+          "text-muted": "#705b63",
+          "brand": "#985168",
+          "brand-soft": "#f8e4ea",
+          "brand-strong": "#74374d",
+          "floral-accent": "#a64f6c",
+          "success": "#39705a",
+          "warning": "#8a5a18",
+          "danger": "#9b405f",
+          "border": "#ead9df",
+          "border-strong": "#d6b6c1"
+        },
+        "dark": {
+          "canvas": "#211820",
+          "surface": "#2b2028",
+          "surface-muted": "#35262f",
+          "text": "#fff7f2",
+          "text-muted": "#d8bbc5",
+          "brand": "#f2a9bd",
+          "brand-soft": "#4a2f3a",
+          "brand-strong": "#ffd1dc",
+          "floral-accent": "#e58da7",
+          "success": "#83c9a9",
+          "warning": "#e5b76e",
+          "danger": "#f295b2",
+          "border": "#523a47",
+          "border-strong": "#73505f"
+        }
+      },
+      "tailwind": {
+        "canvas": "--color-canvas",
+        "surface": "--color-surface",
+        "surface-muted": "--color-surface-muted",
+        "text": "--color-text",
+        "text-muted": "--color-text-muted",
+        "brand": "--color-brand",
+        "brand-soft": "--color-brand-soft",
+        "brand-strong": "--color-brand-strong",
+        "floral-accent": "--color-floral-accent",
+        "success": "--color-success",
+        "warning": "--color-warning",
+        "danger": "--color-danger",
+        "border": "--color-border",
+        "border-strong": "--color-border-strong"
+      }
+    },
+    "radius": {
+      "control": { "value": 8, "unit": "px", "tailwind": "--radius-control" },
+      "card": { "value": 12, "unit": "px", "tailwind": "--radius-card" },
+      "overlay": { "value": 16, "unit": "px", "tailwind": "--radius-overlay" }
+    },
+    "motion": {
+      "fast": { "value": 140, "unit": "ms", "css": "--motion-fast" },
+      "standard": { "value": 220, "unit": "ms", "css": "--motion-standard" },
+      "slow": { "value": 300, "unit": "ms", "css": "--motion-slow" }
+    },
+    "layout": {
+      "gutter-mobile": { "value": 16, "unit": "px" },
+      "gutter-tablet": { "value": 24, "unit": "px" },
+      "gutter-desktop": { "value": 40, "unit": "px" },
+      "content-storefront": { "value": 1280, "unit": "px" },
+      "content-admin": { "value": 1440, "unit": "px" },
+      "content-readable": { "value": 672, "unit": "px" },
+      "admin-sidebar": { "value": 256, "unit": "px" }
+    },
+    "breakpoint": {
+      "mobile": { "value": 390, "unit": "px" },
+      "tablet": { "value": 768, "unit": "px" },
+      "desktop": { "value": 1024, "unit": "px" },
+      "wide": { "value": 1440, "unit": "px" }
+    }
+  }
+}

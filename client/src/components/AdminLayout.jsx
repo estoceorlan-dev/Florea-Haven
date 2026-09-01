@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { BrandMark } from './BrandMark.jsx';
+import { ThemeSelector } from './ui/ThemeSelector.jsx';
 
 const navigation = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard, end: true },
@@ -31,16 +32,17 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-mist text-ink">
+    <div className="min-h-screen bg-surface-muted text-text">
       <a className="skip-link" href="#admin-content">
         Skip to admin content
       </a>
-      <header className="sticky top-0 z-30 border-b border-evergreen/10 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-evergreen/10 bg-surface/95 backdrop-blur">
         <div className="page-shell flex min-h-20 flex-wrap items-center justify-between gap-4 py-4">
           <Link to="/" aria-label="Floréa Haven home">
             <BrandMark />
           </Link>
           <div className="flex items-center gap-3 sm:gap-4">
+            <ThemeSelector compact className="hidden md:grid" />
             <div className="hidden text-right sm:block">
               <p className="text-xs font-semibold text-evergreen">{user.name}</p>
               <p className="mt-0.5 text-[0.68rem] text-ink/50">{user.email}</p>
@@ -58,6 +60,7 @@ export function AdminLayout() {
               <LogOut size={18} aria-hidden="true" />
             </button>
           </div>
+          <ThemeSelector compact className="w-full md:hidden" />
           <nav
             className="order-3 flex w-full gap-1 overflow-x-auto border-t border-evergreen/10 pt-3"
             aria-label="Administrator"

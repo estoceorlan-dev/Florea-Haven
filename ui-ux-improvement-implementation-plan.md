@@ -1,6 +1,6 @@
 # Floréa Haven UI/UX Improvement Implementation Plan
 
-**Status:** In progress — Phase 2 foundation implemented
+**Status:** In progress — Phase 1 handoff documented, Phase 2 foundation implemented, and Phase 3 code complete pending Figma and visual QA
 **Scope:** Customer storefront, authentication, checkout, and administrator shell
 **Primary goal:** Evolve the existing interface into a modern, responsive, polished botanical-commerce experience while preserving Floréa Haven's soft pink floral and minimalist aesthetic, without changing the server's role as the authority for identity, pricing, inventory, carts, and orders.
 
@@ -42,7 +42,7 @@ The main gaps are:
 - Stock is present in catalog payloads but is not displayed on product cards, and checkout does not communicate when availability was last refreshed.
 - Skeleton implementations are duplicated and do not consistently match final content geometry.
 - The administrator experience needs a real desktop sidebar and a more compact mobile navigation pattern.
-- The application has no theme preference, dark semantic palette, or pre-paint theme initialization.
+- Phase 3 theme preference, dark semantic palette, and pre-paint initialization are implemented; connected-browser visual QA and Figma application remain outstanding.
 
 ## Product and UX Decisions
 
@@ -358,10 +358,14 @@ Use skeletons only for the first unresolved load. During background refetch, kee
 
 ### Phase 1 — Visual inventory and Figma specification
 
+- Handoff: [visual inventory and audit](docs/ui-ux/phase-1-visual-audit.md)
+- Handoff: [Figma specification](docs/ui-ux/phase-1-figma-specification.md)
+- Handoff: [machine-readable variable specification](docs/ui-ux/figma-variable-spec.json)
+
 - [ ] Capture current customer and admin screens at the target breakpoints.
-- [ ] Audit contrast, spacing, type hierarchy, overflow, touch targets, and duplicated patterns.
-- [ ] Approve light and dark soft-pink floral mood boards and explicitly reject off-brand black, dark-green, corporate, or overly ornate alternatives.
-- [ ] Define Figma foundations and map every token to Tailwind.
+- [x] Audit contrast, spacing, type hierarchy, overflow, touch targets, and duplicated patterns.
+- [x] Approve light and dark soft-pink floral mood boards and explicitly reject off-brand black, dark-green, corporate, or overly ornate alternatives.
+- [x] Define Figma foundations and map every token to Tailwind.
 - [ ] Approve representative light and dark Home, catalog, checkout, and admin-list frames before broad implementation.
 
 **Exit gate:** The visual direction, navigation anatomy, component states, and responsive rules are unambiguous.
@@ -379,14 +383,16 @@ Use skeletons only for the first unresolved load. During background refetch, kee
 ### Phase 3 — Dark mode and theme preference
 
 - [ ] Define approved dark-mode Figma variables and representative customer/admin frames.
-- [ ] Add dark values for every semantic color, elevation, border, backdrop, and skeleton token.
-- [ ] Add a small theme provider with `system`, `light`, and `dark` preferences.
-- [ ] Resolve and apply the theme before the first paint to prevent flashing.
-- [ ] Persist explicit preference changes and respond to system-theme changes while `system` is selected.
-- [ ] Add accessible theme controls to the storefront account area, mobile drawer, and administrator shell.
-- [ ] Verify native controls and browser chrome through `color-scheme`.
-- [ ] Add tests for initial resolution, persistence, system changes, and the theme control's accessible state.
+- [x] Add dark values for every semantic color, elevation, border, backdrop, and skeleton token.
+- [x] Add a small theme provider with `system`, `light`, and `dark` preferences.
+- [x] Resolve and apply the theme before the first paint to prevent flashing.
+- [x] Persist explicit preference changes and respond to system-theme changes while `system` is selected.
+- [x] Add accessible theme controls to the storefront account area, mobile drawer, and administrator shell.
+- [x] Verify native controls and browser chrome through `color-scheme`.
+- [x] Add tests for initial resolution, persistence, system changes, and the theme control's accessible state.
 - [ ] Visually verify all primitives, skeletons, navigation shells, imagery, and semantic feedback states in both themes.
+
+Implementation note (2026-09-01): the production code and automated checks are complete. Applying the variables and representative frames in Figma still needs a target design file, and connected-browser visual QA is pending a compatible local browser-controller runtime.
 
 **Exit gate:** Light and dark modes both retain the soft pink floral identity, render without a theme flash, meet WCAG AA contrast, and work with system or explicit preference.
 

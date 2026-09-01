@@ -107,7 +107,7 @@ export function AdminOrderDetailPage() {
 
       {notice && (
         <p
-          className="mt-6 border border-evergreen/15 bg-white px-4 py-3 text-sm text-evergreen"
+          className="mt-6 border border-evergreen/15 bg-surface px-4 py-3 text-sm text-evergreen"
           role="status"
         >
           {notice}
@@ -130,7 +130,7 @@ export function AdminOrderDetailPage() {
       )}
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <div className="border border-evergreen/10 bg-white p-6">
+        <div className="border border-evergreen/10 bg-surface p-6">
           <div className="flex gap-3">
             <UserRound className="mt-0.5 shrink-0 text-leaf" size={19} />
             <div>
@@ -149,7 +149,7 @@ export function AdminOrderDetailPage() {
           </div>
         </div>
 
-        <div className="border border-evergreen/10 bg-white p-6">
+        <div className="border border-evergreen/10 bg-surface p-6">
           <p className="eyebrow text-clay">Status actions</p>
           {nextStatuses.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-3">

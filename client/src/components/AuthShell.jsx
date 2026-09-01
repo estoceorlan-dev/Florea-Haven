@@ -36,7 +36,7 @@ export function AuthShell({ eyebrow, title, introduction, children }) {
           src="https://images.unsplash.com/photo-1487070183336-b863922373d4?auto=format&fit=crop&w=1500&q=88"
           alt="Soft garden flowers arranged in natural light"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-evergreen/85 via-evergreen/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-image-overlay/90 via-image-overlay/15 to-transparent" />
         <blockquote className="absolute inset-x-0 bottom-0 p-12 text-white xl:p-16">
           <p className="max-w-lg font-display text-4xl leading-[1.08] tracking-[-0.04em]">
             “Where flowers are remembered, and small rituals are given room to grow.”
