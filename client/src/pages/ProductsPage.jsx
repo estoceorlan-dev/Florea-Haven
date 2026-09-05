@@ -1,11 +1,14 @@
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Flower2, Search, SlidersHorizontal, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { CatalogFilters } from '../components/CatalogFilters.jsx';
 import { InlineError } from '../components/InlineError.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/ProductGridSkeleton.jsx';
-import { useAsync } from '../hooks/useAsync.js';
-import { catalogApi } from '../services/api.js';
+import { NavigationDrawer } from '../components/ui/NavigationDrawer.jsx';
+import { useCategoriesQuery } from '../queries/useCategoriesQuery.js';
+import { useProductsQuery } from '../queries/useProductsQuery.js';
+import { formatCurrency } from '../utils/currency.js';
 
 const sortOptions = [
   ['featured', 'Featured'],
@@ -15,221 +18,137 @@ const sortOptions = [
   ['name-asc', 'Name: A–Z'],
 ];
 
-const productParamsFromUrl = (searchParams) => ({
-  search: searchParams.get('search') ?? '',
-  category: searchParams.get('category') ?? '',
-  minPrice: searchParams.get('minPrice') ?? '',
-  maxPrice: searchParams.get('maxPrice') ?? '',
-  sort: searchParams.get('sort') ?? 'featured',
-  page: searchParams.get('page') ?? '1',
-  limit: 9,
-});
-
 export function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchValue, setSearchValue] = useState(searchParams.get('search') ?? '');
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') ?? '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') ?? '');
-  const searchKey = searchParams.toString();
-  const requestParams = useMemo(
-    () => productParamsFromUrl(searchParams),
-    // searchKey is the stable serialization of the URL filter state.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchKey],
-  );
-
-  const categories = useAsync(() => catalogApi.getCategories(), []);
-  const products = useAsync(() => catalogApi.getProducts(requestParams), [searchKey]);
+  const filterButtonRef = useRef(null);
+  const closeFilters = useCallback(() => setMobileFiltersOpen(false), []);
+  const requestParams = Object.fromEntries(searchParams);
+  const categories = useCategoriesQuery();
+  const products = useProductsQuery({ ...requestParams, limit: 9 });
 
   useEffect(() => {
-    // Keep editable filter fields aligned with URL navigation (including the
-    // header category links and browser back/forward actions).
+    // Keep editable search and the drawer aligned with back/forward navigation.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchValue(searchParams.get('search') ?? '');
-    setMinPrice(searchParams.get('minPrice') ?? '');
-    setMaxPrice(searchParams.get('maxPrice') ?? '');
-  }, [searchKey, searchParams]);
+    setMobileFiltersOpen(false);
+  }, [searchParams]);
 
   const updateParams = (updates) => {
     const next = new URLSearchParams(searchParams);
-
     Object.entries(updates).forEach(([key, value]) => {
       if (value === '' || value === null || value === undefined) next.delete(key);
       else next.set(key, String(value));
     });
-
-    if (!Object.prototype.hasOwnProperty.call(updates, 'page')) next.delete('page');
+    if (!Object.hasOwn(updates, 'page')) next.delete('page');
     setSearchParams(next);
-  };
-
-  const submitSearch = (event) => {
-    event.preventDefault();
-    updateParams({ search: searchValue.trim() });
-  };
-
-  const submitPrice = (event) => {
-    event.preventDefault();
-    updateParams({ minPrice, maxPrice });
-    setMobileFiltersOpen(false);
   };
 
   const clearFilters = () => {
     setSearchValue('');
-    setMinPrice('');
-    setMaxPrice('');
     setSearchParams({});
-    setMobileFiltersOpen(false);
+    closeFilters();
   };
-
-  const activeCategory = searchParams.get('category') ?? '';
-  const hasFilters = ['search', 'category', 'minPrice', 'maxPrice'].some((key) =>
-    searchParams.has(key),
-  );
-  const catalogTitle = activeCategory
-    ? (categories.data?.data.find((category) => category.slug === activeCategory)
-        ?.name ?? 'Collection')
-    : 'The collection';
-
+  const activeCategory = requestParams.category ?? '';
+  const categoryName =
+    categories.data?.data.find((category) => category.slug === activeCategory)?.name ??
+    'Collection';
+  const appliedFilters = [
+    requestParams.search && { key: 'search', label: `Search: ${requestParams.search}` },
+    activeCategory && { key: 'category', label: categoryName },
+    requestParams.minPrice && {
+      key: 'minPrice',
+      label: `From ${formatCurrency(Number(requestParams.minPrice))}`,
+    },
+    requestParams.maxPrice && {
+      key: 'maxPrice',
+      label: `Up to ${formatCurrency(Number(requestParams.maxPrice))}`,
+    },
+  ].filter(Boolean);
+  const pagination = products.data?.pagination;
   const filterPanel = (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-center justify-between">
-          <h2 className="filter-heading">Collection</h2>
-          {hasFilters && (
-            <button
-              className="text-link text-[0.68rem]"
-              type="button"
-              onClick={clearFilters}
-            >
-              Clear all
-            </button>
-          )}
-        </div>
-        <div className="mt-4 flex flex-col items-start gap-3">
-          <button
-            className={`filter-option ${activeCategory === '' ? 'filter-option-active' : ''}`}
-            type="button"
-            onClick={() => updateParams({ category: '' })}
-          >
-            All pieces
-          </button>
-          {categories.data?.data.map((category) => (
-            <button
-              className={`filter-option ${
-                activeCategory === category.slug ? 'filter-option-active' : ''
-              }`}
-              key={category.id}
-              type="button"
-              onClick={() => updateParams({ category: category.slug })}
-            >
-              {category.name}
-              <span className="ml-2 text-ink/35">{category.product_count}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <form onSubmit={submitPrice}>
-        <h2 className="filter-heading">Price range</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <label>
-            <span className="sr-only">Minimum price</span>
-            <span className="price-input">
-              <span>₱</span>
-              <input
-                inputMode="numeric"
-                min="0"
-                type="number"
-                placeholder="Min"
-                value={minPrice}
-                onChange={(event) => setMinPrice(event.target.value)}
-              />
-            </span>
-          </label>
-          <label>
-            <span className="sr-only">Maximum price</span>
-            <span className="price-input">
-              <span>₱</span>
-              <input
-                inputMode="numeric"
-                min="0"
-                type="number"
-                placeholder="Max"
-                value={maxPrice}
-                onChange={(event) => setMaxPrice(event.target.value)}
-              />
-            </span>
-          </label>
-        </div>
-        <button className="button-secondary mt-3 w-full" type="submit">
-          Apply price
-        </button>
-      </form>
-    </div>
+    <CatalogFilters
+      key={`${requestParams.minPrice ?? ''}:${requestParams.maxPrice ?? ''}`}
+      categories={categories}
+      activeCategory={activeCategory}
+      minPrice={requestParams.minPrice ?? ''}
+      maxPrice={requestParams.maxPrice ?? ''}
+      onChange={updateParams}
+    />
   );
 
   return (
     <div>
-      <section className="border-b border-evergreen/10 bg-mist">
-        <div className="page-shell py-14 text-center sm:py-20">
+      <section className="border-b border-border bg-surface-muted">
+        <div className="page-shell py-12 text-center sm:py-16">
           <p className="eyebrow text-clay">Bring the garden closer</p>
           <h1 className="mt-3 font-display text-5xl tracking-[-0.055em] text-evergreen sm:text-7xl">
-            {catalogTitle}
+            {activeCategory ? categoryName : 'The collection'}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-ink/60 sm:text-base">
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-text-muted sm:text-base">
             Flowers for now, seeds for later, and botanical fragrance to keep the
             feeling with you.
           </p>
         </div>
       </section>
-
-      <div className="page-shell py-10 md:py-14">
+      <div className="page-shell py-8 md:py-12">
         <form
-          className="mb-8 flex items-center gap-3 border-b border-evergreen/25 pb-3 md:hidden"
+          className="mb-6 flex items-center gap-3 rounded-control border border-border bg-surface p-2 pl-4"
           role="search"
-          onSubmit={submitSearch}
+          aria-label="Search the collection"
+          onSubmit={(event) => {
+            event.preventDefault();
+            updateParams({ search: searchValue.trim() });
+          }}
         >
-          <Search size={18} aria-hidden="true" />
-          <label className="sr-only" htmlFor="mobile-catalog-search">
+          <Search className="shrink-0 text-text-muted" size={18} aria-hidden="true" />
+          <label className="sr-only" htmlFor="catalog-search">
             Search products
           </label>
           <input
-            id="mobile-catalog-search"
-            className="min-w-0 flex-1 bg-transparent outline-none"
+            id="catalog-search"
+            className="min-h-11 min-w-0 flex-1 bg-transparent text-sm"
+            type="search"
+            maxLength={100}
             placeholder="Search the collection"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
           />
-          <button className="text-link" type="submit">
+          <button className="button-secondary shrink-0" type="submit">
             Search
           </button>
         </form>
-
-        <div className="mb-8 flex items-center justify-between gap-4 border-b border-evergreen/10 pb-5">
-          <div className="flex items-center gap-3">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
+          <div className="flex flex-wrap items-center gap-3">
             <button
+              ref={filterButtonRef}
               className="button-secondary md:hidden"
               type="button"
+              aria-expanded={mobileFiltersOpen}
+              aria-controls="catalog-filter-drawer"
               onClick={() => setMobileFiltersOpen(true)}
             >
-              <SlidersHorizontal size={15} aria-hidden="true" />
-              Filters
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              Filters{appliedFilters.length > 0 ? ` (${appliedFilters.length})` : ''}
             </button>
-            <p className="hidden text-sm text-ink/55 sm:block" aria-live="polite">
-              {products.data
-                ? `${products.data.pagination.total} ${
-                    products.data.pagination.total === 1 ? 'piece' : 'pieces'
-                  }`
-                : 'Gathering pieces…'}
+            <p
+              className="text-sm text-text-muted"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {pagination
+                ? `${pagination.total} ${pagination.total === 1 ? 'piece' : 'pieces'}`
+                : products.error
+                  ? 'Collection unavailable'
+                  : 'Gathering pieces…'}
             </p>
           </div>
-
-          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-ink/55">
-            <span className="hidden sm:inline">Sort</span>
+          <label className="flex min-w-0 items-center gap-2 text-sm text-text-muted">
+            Sort
             <select
-              className="bg-transparent py-2 text-sm font-normal normal-case tracking-normal text-ink outline-none"
-              value={requestParams.sort}
+              className="min-h-11 min-w-0 rounded-control border border-border bg-surface px-2 text-sm text-text"
+              value={requestParams.sort ?? 'featured'}
               onChange={(event) => updateParams({ sort: event.target.value })}
               aria-label="Sort products"
             >
@@ -241,85 +160,140 @@ export function ProductsPage() {
             </select>
           </label>
         </div>
-
-        <div className="grid gap-10 md:grid-cols-[210px_1fr] lg:gap-16">
-          <aside className="hidden md:block">
-            <form
-              className="mb-8 flex items-center gap-2 border-b border-evergreen/25 pb-2"
-              role="search"
-              onSubmit={submitSearch}
+        {appliedFilters.length > 0 && (
+          <div
+            className="mb-6 flex flex-wrap items-center gap-2"
+            aria-label="Applied filters"
+          >
+            {appliedFilters.map(({ key, label }) => (
+              <button
+                key={key}
+                className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-control border border-border bg-brand-soft px-3 text-left text-xs text-text"
+                type="button"
+                aria-label={`Remove ${label} filter`}
+                onClick={() => updateParams({ [key]: '' })}
+              >
+                <span className="min-w-0 break-words">{label}</span>
+                <X className="shrink-0" size={14} aria-hidden="true" />
+              </button>
+            ))}
+            <button
+              className="text-link min-h-11 px-2"
+              type="button"
+              onClick={clearFilters}
             >
-              <Search size={16} aria-hidden="true" />
-              <label className="sr-only" htmlFor="catalog-search">
-                Search products
-              </label>
-              <input
-                id="catalog-search"
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                placeholder="Search"
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-              />
-            </form>
+              Clear all
+            </button>
+          </div>
+        )}
+        <div className="grid gap-8 md:grid-cols-[190px_minmax(0,1fr)] lg:gap-12">
+          <aside className="hidden md:block" aria-label="Catalog filters">
             {filterPanel}
           </aside>
-
-          <section aria-label="Products">
-            {products.isLoading && <ProductGridSkeleton count={9} />}
-            {products.error && (
-              <InlineError error={products.error} onRetry={products.retry} />
-            )}
-            {products.data && products.data.data.length === 0 && (
-              <div className="border border-evergreen/10 bg-surface px-6 py-16 text-center">
-                <p className="font-display text-3xl text-evergreen">
-                  Nothing blooming here yet
-                </p>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-ink/55">
-                  Try a broader search or clear the filters to see the full collection.
-                </p>
-                <button
-                  className="button-secondary mt-6"
-                  type="button"
-                  onClick={clearFilters}
+          <section className="min-w-0" aria-label="Products">
+            <p className="mb-4 min-h-5 text-xs text-text-muted" role="status">
+              {products.isPlaceholderData
+                ? 'Updating the collection…'
+                : products.data
+                  ? products.isFetching
+                    ? 'Updating availability…'
+                    : 'Availability refreshes every 30 seconds while you browse.'
+                  : ''}
+            </p>
+            {products.isPending && <ProductGridSkeleton count={9} />}
+            {products.error &&
+              (products.data ? (
+                <div
+                  className="mb-5 rounded-control border border-border bg-surface-muted p-4 text-sm text-text-muted"
+                  role="status"
                 >
-                  Clear filters
-                </button>
+                  <p>
+                    Availability could not be refreshed. Showing the last checked stock.
+                  </p>
+                  <button
+                    className="text-link min-h-11"
+                    type="button"
+                    onClick={() => products.refetch()}
+                  >
+                    Retry stock check
+                  </button>
+                </div>
+              ) : (
+                <InlineError error={products.error} onRetry={products.refetch} />
+              ))}
+            {products.data?.data.length === 0 && (
+              <div className="rounded-card border border-border bg-surface px-6 py-14 text-center">
+                <Flower2
+                  className="mx-auto text-clay"
+                  size={32}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <h2 className="mt-4 font-display text-3xl text-evergreen">
+                  Nothing blooming here yet
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-text-muted">
+                  {pagination.page > 1
+                    ? 'There are no pieces on this page. Return to the first page to keep browsing.'
+                    : appliedFilters.length
+                      ? 'Try a broader search or clear the filters to see the full collection.'
+                      : 'New pieces are on their way. Check back soon.'}
+                </p>
+                {pagination.page > 1 ? (
+                  <button
+                    className="button-secondary mt-6"
+                    type="button"
+                    onClick={() => updateParams({ page: 1 })}
+                  >
+                    Back to first page
+                  </button>
+                ) : (
+                  appliedFilters.length > 0 && (
+                    <button
+                      className="button-secondary mt-6"
+                      type="button"
+                      onClick={clearFilters}
+                    >
+                      Clear filters
+                    </button>
+                  )
+                )}
               </div>
             )}
             {products.data && products.data.data.length > 0 && (
               <>
-                <div className="product-grid">
+                <div className="product-grid" aria-busy={products.isPlaceholderData}>
                   {products.data.data.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      isUpdating={products.isFetching}
+                    />
                   ))}
                 </div>
-
-                {products.data.pagination.totalPages > 1 && (
+                {pagination.totalPages > 1 && (
                   <nav
-                    className="mt-14 flex items-center justify-center gap-2"
+                    className="mt-10 flex flex-wrap items-center justify-center gap-2"
                     aria-label="Pagination"
                   >
                     <button
                       className="pagination-button"
                       type="button"
-                      disabled={!products.data.pagination.hasPreviousPage}
-                      onClick={() =>
-                        updateParams({ page: products.data.pagination.page - 1 })
+                      disabled={
+                        !pagination.hasPreviousPage || products.isPlaceholderData
                       }
+                      onClick={() => updateParams({ page: pagination.page - 1 })}
                     >
                       Previous
                     </button>
-                    <span className="px-3 text-xs text-ink/50">
-                      {products.data.pagination.page} /{' '}
-                      {products.data.pagination.totalPages}
+                    <span className="px-2 text-xs text-text-muted" aria-current="page">
+                      Page {pagination.page} of {pagination.totalPages}
                     </span>
                     <button
                       className="pagination-button"
                       type="button"
-                      disabled={!products.data.pagination.hasNextPage}
-                      onClick={() =>
-                        updateParams({ page: products.data.pagination.page + 1 })
-                      }
+                      disabled={!pagination.hasNextPage || products.isPlaceholderData}
+                      onClick={() => updateParams({ page: pagination.page + 1 })}
                     >
                       Next
                     </button>
@@ -330,25 +304,36 @@ export function ProductsPage() {
           </section>
         </div>
       </div>
-
-      {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 bg-backdrop backdrop-blur-sm md:hidden">
-          <div className="absolute inset-y-0 right-0 w-[min(88vw,380px)] overflow-y-auto bg-ivory px-6 py-6 shadow-2xl">
-            <div className="mb-9 flex items-center justify-between">
-              <p className="font-display text-3xl text-evergreen">Filters</p>
-              <button
-                className="icon-button"
-                type="button"
-                aria-label="Close filters"
-                onClick={() => setMobileFiltersOpen(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            {filterPanel}
-          </div>
+      <NavigationDrawer
+        id="catalog-filter-drawer"
+        label="catalog filters"
+        title="Filters"
+        side="right"
+        open={mobileFiltersOpen}
+        onClose={closeFilters}
+        returnFocusRef={filterButtonRef}
+        desktopBreakpoint={768}
+      >
+        <div className="space-y-6 p-5">
+          {filterPanel}
+          {appliedFilters.length > 0 && (
+            <button
+              className="button-secondary w-full"
+              type="button"
+              onClick={clearFilters}
+            >
+              Clear all filters
+            </button>
+          )}
+          <button
+            className="button-primary w-full"
+            type="button"
+            onClick={closeFilters}
+          >
+            View results
+          </button>
         </div>
-      )}
+      </NavigationDrawer>
     </div>
   );
 }

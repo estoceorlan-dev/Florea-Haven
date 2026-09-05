@@ -8,6 +8,8 @@ describe('StockIndicator', () => {
     [1, 'Only 1 left', 'low'],
     [5, 'Only 5 left', 'low'],
     [6, '6 in stock', 'available'],
+    [null, 'Checking stock…', 'loading'],
+    [undefined, 'Checking stock…', 'loading'],
   ])('renders stock quantity %s as %s', (quantity, label, state) => {
     render(<StockIndicator stockQuantity={quantity} />);
 

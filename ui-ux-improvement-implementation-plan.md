@@ -1,6 +1,6 @@
 # Floréa Haven UI/UX Improvement Implementation Plan
 
-**Status:** In progress — Phases 2, 3, and 5 implemented in code; Figma and connected-browser visual QA remain pending
+**Status:** In progress — Phases 2, 3, 5, and 6 implemented in code; Phase 4 catalog foundation implemented; Figma and connected-browser visual QA remain pending
 **Scope:** Customer storefront, authentication, checkout, and administrator shell
 **Primary goal:** Evolve the existing interface into a modern, responsive, polished botanical-commerce experience while preserving Floréa Haven's soft pink floral and minimalist aesthetic, without changing the server's role as the authority for identity, pricing, inventory, carts, and orders.
 
@@ -398,15 +398,17 @@ Implementation note (2026-09-01): the production code and automated checks are c
 
 ### Phase 4 — Stable fetching and caching
 
-- [ ] Install and configure TanStack Query.
+- [x] Install and configure TanStack Query.
 - [ ] Make API GET functions signal-aware and preserve abort errors.
 - [ ] Add normalized query keys and catalog/cart/order hooks.
-- [ ] Migrate Home, catalog, and product detail away from `useAsync`.
+- [x] Migrate Home, catalog, and product detail away from `useAsync`.
 - [ ] Migrate cart, checkout, customer orders, and admin queries.
 - [ ] Implement cache ownership, retry, refresh, and invalidation rules.
 - [ ] Remove `useAsync.js` only after no imports remain.
 
 **Exit gate:** Duplicate consumers share a response, stale content remains visible during refresh, obsolete requests cancel cleanly, and mutations update/invalidate the right views.
+
+**Phase 6 prerequisite delivered:** Public catalog/category/detail queries now use normalized keys, cancellation, bounded retries, foreground polling, and shared inventory updates. Catalog GETs accept signals and preserve abort errors. Cart additions, checkout, product administration, and order cancellation invalidate public catalog data. Authenticated cart/order/admin query migration and ownership rules remain Phase 4 work; `useAsync` remains for customer orders.
 
 ### Phase 5 — Navigation, user identity, and auth flow
 
@@ -424,13 +426,17 @@ Implementation note (2026-09-01): both responsive shells, role-based landing rul
 
 ### Phase 6 — Catalog and live stock
 
-- [ ] Add shared stock indicators to product cards and product detail.
-- [ ] Add foreground polling plus focus/reconnect refresh.
-- [ ] Synchronize Add to Cart disabled states with refreshed inventory.
-- [ ] Refine catalog filters, cards, pagination, empty states, and mobile layout.
-- [ ] Add tests for stock thresholds and stock transitions.
+- [x] Add shared stock indicators to product cards and product detail.
+- [x] Add foreground polling plus focus/reconnect refresh.
+- [x] Synchronize Add to Cart disabled states with refreshed inventory.
+- [x] Refine catalog filters, cards, pagination, empty states, and mobile layout.
+- [x] Add tests for stock thresholds and stock transitions.
 
 **Exit gate:** A visible catalog item updates without a full reload and never remains purchasable after refreshed stock reaches zero.
+
+**Implementation notes:** Home favorites, the catalog, and product details refresh every 30 seconds while visible. Stock changes propagate across cached product views, unknown/zero stock disables purchase, and background refresh preserves content. Filters now have applied chips/counts, price validation, accessible drawer controls, and out-of-range pagination recovery. Automated tests cover inventory transitions, hidden/unmounted polling, focus/reconnect, cancellation, shared cache behavior, and filter keyboard handling. Connected-browser responsive, theme, and reduced-motion visual QA remain pending because no browser was available in this session.
+
+**Automated verification:** `npm run lint`, `npm test` (59 client tests and 40 server tests), and `npm run build` pass.
 
 ### Phase 7 — Cart, checkout, and order experience
 

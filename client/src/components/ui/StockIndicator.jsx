@@ -1,7 +1,7 @@
 const getStockState = (stockQuantity, requestedQuantity) => {
   const quantity = Number(stockQuantity);
 
-  if (!Number.isFinite(quantity)) {
+  if (stockQuantity == null || !Number.isFinite(quantity)) {
     return { label: 'Checking stock…', state: 'loading' };
   }
 
@@ -46,12 +46,18 @@ export function StockIndicator({
     <p
       className={`stock-indicator ${className}`}
       data-stock-state={stock.state}
-      aria-live="polite"
+      data-updating={isUpdating || undefined}
     >
       <span className="stock-indicator-dot" aria-hidden="true" />
-      <span>{stock.label}</span>
-      {isUpdating && <span className="font-normal opacity-70">Updating…</span>}
-      {!isUpdating && updated && (
+      <span aria-live="polite" aria-atomic="true">
+        {stock.label}
+      </span>
+      {isUpdating && (
+        <span className="sr-only" aria-hidden="true">
+          Updating…
+        </span>
+      )}
+      {updated && (
         <time
           className="font-normal opacity-70"
           dateTime={updated.dateTime}

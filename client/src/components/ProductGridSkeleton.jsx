@@ -1,9 +1,9 @@
 import { ProductCardSkeleton } from './ui/Skeleton.jsx';
 
-export function ProductGridSkeleton({ count = 6 }) {
+export function ProductGridSkeleton({ count = 6, className = '' }) {
   return (
     <div
-      className="product-grid"
+      className={`product-grid ${className}`}
       role="status"
       aria-label="Loading products"
       aria-busy="true"

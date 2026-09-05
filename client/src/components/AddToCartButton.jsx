@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
+import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 
 export function AddToCartButton({
   product,
@@ -11,13 +12,17 @@ export function AddToCartButton({
 }) {
   const { user } = useAuth();
   const { addItem } = useCart();
+  const invalidateCatalog = useInvalidateCatalog();
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
-  const isOutOfStock = product.stock_quantity < 1;
+  const isStockUnknown =
+    product.stock_quantity == null || !Number.isFinite(Number(product.stock_quantity));
+  const isOutOfStock = !isStockUnknown && Number(product.stock_quantity) < 1;
 
   const add = async () => {
+    if (isStockUnknown || isOutOfStock || status === 'adding') return;
     if (!user) {
       navigate('/login', {
         state: { from: `${location.pathname}${location.search}` },
@@ -34,25 +39,29 @@ export function AddToCartButton({
     } catch (addError) {
       setError(addError.message);
       setStatus('idle');
+    } finally {
+      void invalidateCatalog();
     }
   };
 
-  const label = isOutOfStock
-    ? 'Out of stock'
-    : status === 'adding'
-      ? 'Adding…'
-      : status === 'added'
-        ? 'Added'
-        : compact
-          ? 'Add'
-          : 'Add to cart';
+  const label = isStockUnknown
+    ? 'Checking stock…'
+    : isOutOfStock
+      ? 'Out of stock'
+      : status === 'adding'
+        ? 'Adding…'
+        : status === 'added'
+          ? 'Added'
+          : compact
+            ? 'Add'
+            : 'Add to cart';
 
   return (
     <div>
       <button
         className={className}
         type="button"
-        disabled={isOutOfStock || status === 'adding'}
+        disabled={isStockUnknown || isOutOfStock || status === 'adding'}
         onClick={add}
       >
         {status === 'added' ? (

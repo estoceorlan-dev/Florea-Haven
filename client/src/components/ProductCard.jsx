@@ -5,7 +5,7 @@ import { AddToCartButton } from './AddToCartButton.jsx';
 import { ProductImage } from './ProductImage.jsx';
 import { StockIndicator } from './ui/StockIndicator.jsx';
 
-export function ProductCard({ product }) {
+export function ProductCard({ product, isUpdating = false }) {
   return (
     <article className="product-card group">
       <Link
@@ -14,7 +14,7 @@ export function ProductCard({ product }) {
         aria-label={`View ${product.name}`}
       >
         <ProductImage
-          className="size-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
+          className="size-full object-cover transition duration-300 ease-out group-hover:scale-[1.035] group-focus-within:scale-[1.035]"
           src={product.image_url}
           alt={product.name}
         />
@@ -27,9 +27,9 @@ export function ProductCard({ product }) {
           <ArrowUpRight size={17} aria-hidden="true" />
         </span>
       </Link>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0 flex-1 basis-28 break-words">
             <p className="text-[0.64rem] font-bold uppercase tracking-[0.17em] text-clay">
               {product.category.name}
             </p>
@@ -43,12 +43,18 @@ export function ProductCard({ product }) {
             {formatCurrency(product.price)}
           </p>
         </div>
-        <StockIndicator className="mt-4" stockQuantity={product.stock_quantity} />
-        <AddToCartButton
-          product={product}
-          compact
-          className="mt-4 inline-flex min-h-9 items-center gap-1.5 border-b border-evergreen/25 pb-1 text-[0.66rem] font-bold uppercase tracking-[0.1em] text-evergreen transition hover:border-evergreen"
+        <StockIndicator
+          className="mb-3 mt-4 self-start"
+          stockQuantity={product.stock_quantity}
+          isUpdating={isUpdating}
         />
+        <div className="mt-auto">
+          <AddToCartButton
+            product={product}
+            compact
+            className="button-secondary w-full"
+          />
+        </div>
       </div>
     </article>
   );

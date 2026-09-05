@@ -1,5 +1,6 @@
 import { AuthContext } from '../context/AuthContext.js';
 import { CartContext } from '../context/CartContext.js';
+import { AppQueryProvider } from '../queries/AppQueryProvider.jsx';
 
 const emptyCart = {
   items: [],
@@ -18,34 +19,37 @@ export function TestAppProviders({
   user = null,
   cart = emptyCart,
   cartActions = {},
+  queryClient,
 }) {
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: Boolean(user),
-        isLoading: false,
-        sessionError: null,
-        register: async () => undefined,
-        login: async () => undefined,
-        logout: async () => undefined,
-        ...authActions,
-      }}
-    >
-      <CartContext.Provider
+    <AppQueryProvider client={queryClient}>
+      <AuthContext.Provider
         value={{
-          cart,
-          error: null,
+          user,
+          isAuthenticated: Boolean(user),
           isLoading: false,
-          addItem: async () => cart,
-          updateItem: async () => cart,
-          removeItem: async () => cart,
-          reload: async () => cart,
-          ...cartActions,
+          sessionError: null,
+          register: async () => undefined,
+          login: async () => undefined,
+          logout: async () => undefined,
+          ...authActions,
         }}
       >
-        {children}
-      </CartContext.Provider>
-    </AuthContext.Provider>
+        <CartContext.Provider
+          value={{
+            cart,
+            error: null,
+            isLoading: false,
+            addItem: async () => cart,
+            updateItem: async () => cart,
+            removeItem: async () => cart,
+            reload: async () => cart,
+            ...cartActions,
+          }}
+        >
+          {children}
+        </CartContext.Provider>
+      </AuthContext.Provider>
+    </AppQueryProvider>
   );
 }

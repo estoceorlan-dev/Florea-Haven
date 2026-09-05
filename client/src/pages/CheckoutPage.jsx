@@ -5,6 +5,7 @@ import { InlineError } from '../components/InlineError.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
 import { orderApi } from '../services/api.js';
+import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 import { formatCurrency } from '../utils/currency.js';
 
 const initialAddress = (name) => ({
@@ -57,6 +58,7 @@ function AddressField({
 }
 
 export function CheckoutPage() {
+  const invalidateCatalog = useInvalidateCatalog();
   const { user } = useAuth();
   const { cart, error: cartError, isLoading, reload } = useCart();
   const navigate = useNavigate();
@@ -116,9 +118,11 @@ export function CheckoutPage() {
 
     try {
       const payload = await orderApi.placeOrder(input, submission.current.key);
+      void invalidateCatalog();
       await reload().catch(() => undefined);
       navigate(`/orders/${payload.data.order.id}/confirmation`, { replace: true });
     } catch (submissionError) {
+      void invalidateCatalog();
       setError(submissionError);
       if (
         ['CART_CHANGED', 'PRODUCT_INACTIVE', 'INSUFFICIENT_STOCK'].includes(

@@ -5,12 +5,14 @@ import { InlineError } from '../components/InlineError.jsx';
 import { OrderDetails } from '../components/OrderDetails.jsx';
 import { OrderStatusBadge } from '../components/OrderStatusBadge.jsx';
 import { adminOrderApi } from '../services/api.js';
+import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 import {
   allowedOrderTransitions,
   orderTransitionLabels,
 } from '../utils/order-status.js';
 
 export function AdminOrderDetailPage() {
+  const invalidateCatalog = useInvalidateCatalog();
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
@@ -55,6 +57,7 @@ export function AdminOrderDetailPage() {
 
     try {
       const payload = await adminOrderApi.updateStatus(orderId, status);
+      if (status === 'cancelled') void invalidateCatalog();
       setOrder(payload.data);
       setError(null);
       setNotice(`Order status updated to ${payload.data.status}.`);

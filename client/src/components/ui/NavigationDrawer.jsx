@@ -19,6 +19,7 @@ export function NavigationDrawer({
   returnFocusRef,
   side = 'left',
   title,
+  desktopBreakpoint = 1024,
 }) {
   const panelRef = useRef(null);
 
@@ -26,7 +27,7 @@ export function NavigationDrawer({
     if (!open) return undefined;
 
     const panel = panelRef.current;
-    const desktopQuery = window.matchMedia?.('(min-width: 1024px)');
+    const desktopQuery = window.matchMedia?.(`(min-width: ${desktopBreakpoint}px)`);
     const returnFocusElement = returnFocusRef?.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -74,7 +75,7 @@ export function NavigationDrawer({
         returnFocusElement.focus();
       }
     };
-  }, [onClose, open, returnFocusRef]);
+  }, [desktopBreakpoint, onClose, open, returnFocusRef]);
 
   if (!open) return null;
 

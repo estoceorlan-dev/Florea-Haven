@@ -5,18 +5,21 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { CartProvider } from './context/CartProvider.jsx';
 import { ThemeProvider } from './context/ThemeProvider.jsx';
+import { AppQueryProvider } from './queries/AppQueryProvider.jsx';
 import './styles.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <AppQueryProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </AppQueryProvider>
   </StrictMode>,
 );

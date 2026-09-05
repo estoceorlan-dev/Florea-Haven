@@ -4,8 +4,8 @@ import { InlineError } from '../components/InlineError.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/ProductGridSkeleton.jsx';
 import { CategoryCardSkeleton } from '../components/ui/Skeleton.jsx';
-import { useAsync } from '../hooks/useAsync.js';
-import { catalogApi } from '../services/api.js';
+import { useCategoriesQuery } from '../queries/useCategoriesQuery.js';
+import { useProductsQuery } from '../queries/useProductsQuery.js';
 
 const categoryDetails = {
   flowers: {
@@ -29,11 +29,8 @@ const categoryDetails = {
 };
 
 export function HomePage() {
-  const categories = useAsync(() => catalogApi.getCategories(), []);
-  const featuredProducts = useAsync(
-    () => catalogApi.getProducts({ featured: true, limit: 4 }),
-    [],
-  );
+  const categories = useCategoriesQuery();
+  const featuredProducts = useProductsQuery({ featured: true, limit: 4 });
 
   return (
     <>
@@ -89,7 +86,7 @@ export function HomePage() {
           </p>
         </div>
 
-        {categories.isLoading && (
+        {categories.isPending && (
           <div
             className="grid gap-5 md:grid-cols-3"
             role="status"
@@ -104,7 +101,7 @@ export function HomePage() {
         )}
 
         {categories.error && (
-          <InlineError error={categories.error} onRetry={categories.retry} />
+          <InlineError error={categories.error} onRetry={categories.refetch} />
         )}
 
         {categories.data && (
@@ -164,17 +161,23 @@ export function HomePage() {
             </Link>
           </div>
 
-          {featuredProducts.isLoading && <ProductGridSkeleton count={4} />}
+          {featuredProducts.isPending && (
+            <ProductGridSkeleton count={4} className="featured-grid" />
+          )}
           {featuredProducts.error && (
             <InlineError
               error={featuredProducts.error}
-              onRetry={featuredProducts.retry}
+              onRetry={featuredProducts.refetch}
             />
           )}
           {featuredProducts.data && (
             <div className="product-grid featured-grid">
               {featuredProducts.data.data.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isUpdating={featuredProducts.isFetching}
+                />
               ))}
             </div>
           )}

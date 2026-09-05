@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { ProductImage } from '../components/ProductImage.jsx';
 import { adminCatalogApi } from '../services/api.js';
+import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 import { formatCurrency } from '../utils/currency.js';
 
 const blankProduct = (categories) => ({
@@ -280,6 +281,7 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
 }
 
 export function AdminProductsPage() {
+  const invalidateCatalog = useInvalidateCatalog();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -351,6 +353,7 @@ export function AdminProductsPage() {
       const payload = editing
         ? await adminCatalogApi.updateProduct(editing.id, input)
         : await adminCatalogApi.createProduct(input);
+      void invalidateCatalog();
       setNotice(
         editing
           ? `${payload.data.name} was updated.`
@@ -373,6 +376,7 @@ export function AdminProductsPage() {
     setNotice('');
     try {
       await adminCatalogApi.deactivateProduct(product.id);
+      void invalidateCatalog();
       if (editing?.id === product.id) setEditing(null);
       setNotice(`${product.name} was deactivated.`);
       await loadProducts();
@@ -385,6 +389,7 @@ export function AdminProductsPage() {
     setNotice('');
     try {
       await adminCatalogApi.updateProduct(product.id, { isActive: true });
+      void invalidateCatalog();
       setNotice(`${product.name} is active again.`);
       await loadProducts();
     } catch (restoreError) {

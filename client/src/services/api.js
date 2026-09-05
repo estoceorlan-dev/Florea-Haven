@@ -19,14 +19,21 @@ const request = async (path, options = {}) => {
       headers: { Accept: 'application/json', ...options.headers },
       ...options,
     });
-  } catch {
+  } catch (error) {
+    if (error.name === 'AbortError' || options.signal?.aborted) throw error;
     throw new ApiError(
       'We could not reach the garden right now. Please check your connection and try again.',
       0,
     );
   }
 
-  const payload = await response.json().catch(() => null);
+  const payload = await response.json().catch((error) => {
+    if (error.name === 'AbortError' || options.signal?.aborted) throw error;
+    throw new ApiError(
+      'We could not read the response. Please try again.',
+      response.status,
+    );
+  });
 
   if (!response.ok) {
     throw new ApiError(
@@ -61,9 +68,10 @@ const toQueryString = (params) => {
 };
 
 export const catalogApi = {
-  getCategories: () => request('/api/categories'),
-  getProducts: (params = {}) => request(`/api/products${toQueryString(params)}`),
-  getProduct: (id) => request(`/api/products/${id}`),
+  getCategories: (options = {}) => request('/api/categories', options),
+  getProducts: (params = {}, options = {}) =>
+    request(`/api/products${toQueryString(params)}`, options),
+  getProduct: (id, options = {}) => request(`/api/products/${id}`, options),
 };
 
 export const adminCatalogApi = {

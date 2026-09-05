@@ -5,15 +5,14 @@ import { AddToCartButton } from '../components/AddToCartButton.jsx';
 import { ProductImage } from '../components/ProductImage.jsx';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
 import { StockIndicator } from '../components/ui/StockIndicator.jsx';
-import { useAsync } from '../hooks/useAsync.js';
-import { catalogApi } from '../services/api.js';
+import { useProductQuery } from '../queries/useProductQuery.js';
 import { formatCurrency } from '../utils/currency.js';
 
 export function ProductDetailsPage() {
   const { productId } = useParams();
-  const product = useAsync(() => catalogApi.getProduct(productId), [productId]);
+  const product = useProductQuery(productId);
 
-  if (product.isLoading) {
+  if (product.isPending) {
     return (
       <div
         className="page-shell grid gap-10 py-10 md:grid-cols-2 md:py-16"
@@ -34,10 +33,10 @@ export function ProductDetailsPage() {
     );
   }
 
-  if (product.error) {
+  if (product.error && (!product.data || product.error.status === 404)) {
     return (
       <div className="page-shell py-24">
-        <InlineError error={product.error} onRetry={product.retry} />
+        <InlineError error={product.error} onRetry={product.refetch} />
         <Link className="text-link mx-auto mt-7 w-fit" to="/products">
           <ArrowLeft size={15} aria-hidden="true" />
           Back to the collection
@@ -58,7 +57,7 @@ export function ProductDetailsPage() {
       </div>
 
       <article className="page-shell grid gap-9 pb-20 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:pb-28 lg:gap-24">
-        <div className="relative aspect-[4/5] overflow-hidden bg-sage">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-brand-soft">
           <ProductImage
             className="size-full object-cover"
             src={item.image_url}
@@ -72,7 +71,7 @@ export function ProductDetailsPage() {
           )}
         </div>
 
-        <div className="flex items-center">
+        <div className="flex min-w-0 items-center">
           <div className="w-full max-w-xl">
             <Link
               className="eyebrow text-clay hover:text-evergreen"
@@ -80,7 +79,7 @@ export function ProductDetailsPage() {
             >
               {item.category.name}
             </Link>
-            <h1 className="mt-4 font-display text-5xl leading-[0.96] tracking-[-0.055em] text-evergreen sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 break-words font-display text-5xl leading-[0.96] tracking-[-0.055em] text-evergreen sm:text-6xl lg:text-7xl">
               {item.name}
             </h1>
             <p className="mt-6 text-xl font-semibold text-evergreen">
@@ -89,13 +88,36 @@ export function ProductDetailsPage() {
             <div className="mt-8 h-px bg-evergreen/12" />
             <p className="mt-8 text-base leading-8 text-ink/65">{item.description}</p>
 
-            <StockIndicator className="mt-8" stockQuantity={item.stock_quantity} />
+            <StockIndicator
+              className="mt-8"
+              stockQuantity={item.stock_quantity}
+              isUpdating={product.isFetching}
+              lastUpdated={product.dataUpdatedAt}
+            />
+            {product.error && (
+              <div className="mt-4 text-sm text-text-muted" role="status">
+                <p>
+                  Stock could not be refreshed. Showing the last checked availability.
+                </p>
+                <button
+                  className="text-link min-h-11"
+                  type="button"
+                  onClick={() => product.refetch()}
+                >
+                  Retry stock check
+                </button>
+              </div>
+            )}
 
-            <div className="mt-9 border border-evergreen/15 bg-surface p-5">
-              <AddToCartButton product={item} className="button-primary w-full" />
+            <div className="mt-9 rounded-card border border-border bg-surface p-5">
+              <AddToCartButton
+                key={item.id}
+                product={item}
+                className="button-primary w-full"
+              />
               <p className="mt-3 text-center text-xs leading-5 text-ink/50">
-                Your cart is saved securely to your account. Checkout arrives in Phase
-                5.
+                Your cart is saved to your account. Availability is confirmed at
+                checkout.
               </p>
             </div>
 
