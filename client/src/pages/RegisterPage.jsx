@@ -23,10 +23,7 @@ export function RegisterPage() {
   if (isLoading) return <SessionLoading />;
   if (user) {
     return (
-      <Navigate
-        to={returnPath ?? (user.role === 'admin' ? '/admin' : '/')}
-        replace
-      />
+      <Navigate to={returnPath ?? (user.role === 'admin' ? '/admin' : '/')} replace />
     );
   }
 
@@ -170,7 +167,7 @@ export function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-7 text-center text-sm text-ink/55">
+      <p className="mt-7 text-center text-sm text-text-muted">
         Already have an account?{' '}
         <Link
           className="font-semibold text-evergreen underline decoration-evergreen/25 underline-offset-4"

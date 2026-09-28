@@ -1,14 +1,19 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { LoadingRegion, Skeleton } from './ui/Skeleton.jsx';
 
 export function SessionLoading() {
   return (
-    <div className="page-shell flex min-h-[55vh] items-center justify-center py-20">
-      <div className="text-center" role="status">
-        <span className="mx-auto block size-8 animate-spin rounded-full border-2 border-evergreen/15 border-t-evergreen" />
-        <span className="mt-4 block text-sm text-ink/55">Restoring your session…</span>
+    <LoadingRegion
+      label="Restoring your session"
+      className="page-shell flex min-h-[55vh] items-center justify-center py-20"
+    >
+      <div className="w-full max-w-sm rounded-card border border-border bg-surface p-7 shadow-low">
+        <Skeleton className="mx-auto size-12 rounded-full" />
+        <Skeleton className="mx-auto mt-5 h-5 w-44 rounded-control" />
+        <Skeleton className="mx-auto mt-3 h-3 w-60 max-w-full rounded-control" />
       </div>
-    </div>
+    </LoadingRegion>
   );
 }
 

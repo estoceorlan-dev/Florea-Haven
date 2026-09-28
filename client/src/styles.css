@@ -375,6 +375,7 @@
 
   .button-primary,
   .button-secondary,
+  .button-danger,
   .button-quiet {
     display: inline-flex;
     min-height: 3rem;
@@ -397,6 +398,7 @@
 
   .button-primary:active,
   .button-secondary:active,
+  .button-danger:active,
   .button-quiet:active {
     transform: translateY(1px);
   }
@@ -414,6 +416,7 @@
 
   .button-primary:disabled,
   .button-secondary:disabled,
+  .button-danger:disabled,
   .button-quiet:disabled {
     cursor: not-allowed;
     opacity: 0.6;
@@ -428,6 +431,17 @@
     border-color: var(--color-evergreen);
     background: var(--color-evergreen);
     color: var(--color-canvas);
+  }
+
+  .button-danger {
+    border: 1px solid var(--color-danger);
+    background: var(--color-danger);
+    color: var(--color-canvas);
+  }
+
+  .button-danger:hover {
+    border-color: var(--color-brand-strong);
+    background: var(--color-brand-strong);
   }
 
   .button-quiet {
@@ -502,6 +516,10 @@
     animation: stock-refresh 1s var(--ease-standard) infinite alternate;
   }
 
+  .animate-stock-refresh {
+    animation: stock-refresh 1s var(--ease-standard) infinite alternate;
+  }
+
   .stock-indicator-dot {
     width: 0.42rem;
     height: 0.42rem;
@@ -532,6 +550,70 @@
     border-color: var(--color-border);
     background: var(--color-surface-muted);
     color: var(--color-text-muted);
+  }
+
+  .order-status-badge {
+    display: inline-flex;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface-muted);
+    padding: 0.3rem 0.7rem;
+    color: var(--color-text-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .order-status-badge[data-status='pending'],
+  .order-status-badge[data-status='preparing'] {
+    border-color: color-mix(in srgb, var(--color-warning) 24%, var(--color-border));
+    color: var(--color-warning);
+  }
+
+  .order-status-badge[data-status='confirmed'],
+  .order-status-badge[data-status='shipped'],
+  .order-status-badge[data-status='delivered'] {
+    border-color: color-mix(in srgb, var(--color-success) 24%, var(--color-border));
+    color: var(--color-success);
+  }
+
+  .order-status-badge[data-status='cancelled'] {
+    border-color: color-mix(in srgb, var(--color-danger) 24%, var(--color-border));
+    color: var(--color-danger);
+  }
+
+  .cart-stock-status,
+  .availability-status {
+    display: flex;
+    min-height: 1.75rem;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .cart-stock-status[data-stock-state='low'] {
+    color: var(--color-warning);
+  }
+
+  .cart-stock-status[data-stock-state='unavailable'] {
+    color: var(--color-danger);
+  }
+
+  .availability-status-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex: none;
+    border-radius: 999px;
+    background: var(--color-success);
+  }
+
+  .cart-line-changed {
+    border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+    background: color-mix(in srgb, var(--color-warning) 7%, var(--color-surface));
+    animation: cart-line-change var(--motion-slow) var(--ease-enter) both;
   }
 
   .skeleton {
@@ -700,6 +782,80 @@
     line-height: 1.5;
   }
 
+  .feedback-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    padding: 0.9rem 1rem;
+    color: var(--color-text);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    box-shadow: var(--shadow-low);
+  }
+
+  .feedback-banner[data-tone='success'] {
+    border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
+    color: var(--color-success);
+  }
+
+  .feedback-banner[data-tone='error'] {
+    border-color: color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
+    background: color-mix(in srgb, var(--color-danger) 5%, var(--color-surface));
+    color: var(--color-danger);
+  }
+
+  .empty-state {
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-surface-muted);
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+
+  .empty-state-icon {
+    display: grid;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-inline: auto;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+  }
+
+  .confirmation-root {
+    position: fixed;
+    inset: 0;
+    z-index: var(--layer-modal);
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+  }
+
+  .confirmation-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+    background: var(--color-backdrop);
+    animation: drawer-backdrop-enter var(--motion-standard) var(--ease-enter) both;
+  }
+
+  .confirmation-panel {
+    position: relative;
+    width: min(100%, 30rem);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-overlay);
+    background: var(--color-surface);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-overlay);
+    animation: confirmation-enter var(--motion-standard) var(--ease-enter) both;
+  }
+
   .theme-selector {
     display: grid;
     gap: 0.45rem;
@@ -805,6 +961,20 @@
   to {
     opacity: 0.4;
     transform: scale(1.25);
+  }
+}
+
+@keyframes cart-line-change {
+  from {
+    opacity: 0.72;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes confirmation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
   }
 }
 

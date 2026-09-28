@@ -8,3 +8,11 @@ coverage/
 .idea/
 .vscode/
 !.vscode/extensions.json
+
+# Python backend and isolated local PostgreSQL verification
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.postgres-test/

@@ -100,7 +100,7 @@ export const authApi = {
 };
 
 export const cartApi = {
-  getCart: () => request('/api/cart'),
+  getCart: (options = {}) => request('/api/cart', options),
   addItem: (productId, quantity = 1) =>
     jsonRequest('/api/cart/items', 'POST', { productId, quantity }),
   updateItem: (itemId, quantity) =>
@@ -113,6 +113,7 @@ export const orderApi = {
     jsonRequest('/api/orders', 'POST', input, {
       'Idempotency-Key': idempotencyKey,
     }),
-  getOrders: (params = {}) => request(`/api/orders${toQueryString(params)}`),
-  getOrder: (id) => request(`/api/orders/${id}`),
+  getOrders: (params = {}, options = {}) =>
+    request(`/api/orders${toQueryString(params)}`, options),
+  getOrder: (id, options = {}) => request(`/api/orders/${id}`, options),
 };

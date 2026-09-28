@@ -12,6 +12,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProductDetailsPage } from './ProductDetailsPage.jsx';
 import { ProductsPage } from './ProductsPage.jsx';
+import { AuthContext } from '../context/AuthContext.js';
+import { CartProvider } from '../context/CartProvider.jsx';
+import { AppQueryProvider } from '../queries/AppQueryProvider.jsx';
 import { TestAppProviders } from '../test/TestAppProviders.jsx';
 import { createAppQueryClient } from '../queries/queryClient.js';
 import { queryKeys } from '../queries/queryKeys.js';
@@ -86,24 +89,71 @@ const renderCatalog = (path = '/products', options = {}) => {
 describe('catalog pages', () => {
   it('refreshes stock immediately after a rejected add without retrying the mutation', async () => {
     let stock = 14;
-    const addItem = vi.fn().mockImplementation(async () => {
-      stock = 0;
-      throw new Error('This piece has just sold out.');
+    const queryClient = createAppQueryClient();
+    queryClient.setDefaultOptions({
+      queries: { ...queryClient.getDefaultOptions().queries, retry: false },
     });
-    vi.spyOn(globalThis, 'fetch').mockImplementation((input) =>
-      jsonResponse(
-        String(input).includes('/api/categories')
-          ? { data: [category] }
-          : listResponse([{ ...product, stock_quantity: stock }]),
-      ),
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const path = String(input);
+      if (path.includes('/api/categories')) return jsonResponse({ data: [category] });
+      if (path.includes('/api/cart/items')) {
+        stock = 0;
+        return jsonResponse(
+          {
+            error: {
+              code: 'INSUFFICIENT_STOCK',
+              message: 'This piece has just sold out.',
+            },
+          },
+          409,
+        );
+      }
+      if (path.includes('/api/cart')) {
+        return jsonResponse({
+          data: {
+            cart: {
+              items: [],
+              revision: null,
+              summary: {
+                item_count: 0,
+                distinct_items: 0,
+                subtotal: 0,
+                has_unavailable_items: false,
+              },
+            },
+          },
+        });
+      }
+      return jsonResponse(listResponse([{ ...product, stock_quantity: stock }]));
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/products']}>
+        <AppQueryProvider client={queryClient}>
+          <AuthContext.Provider
+            value={{
+              user: { id: 'customer' },
+              isAuthenticated: true,
+              isLoading: false,
+              sessionError: null,
+            }}
+          >
+            <CartProvider>
+              <ProductsPage />
+            </CartProvider>
+          </AuthContext.Provider>
+        </AppQueryProvider>
+      </MemoryRouter>,
     );
-    renderCatalog('/products', { user: { id: 'customer' }, cartActions: { addItem } });
+
     fireEvent.click(await screen.findByRole('button', { name: 'Add' }));
     expect(await screen.findByRole('button', { name: 'Out of stock' })).toBeDisabled();
     expect(screen.getByRole('alert')).toHaveTextContent(
       'This piece has just sold out.',
     );
-    expect(addItem).toHaveBeenCalledTimes(1);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => String(url).includes('/api/cart/items')),
+    ).toHaveLength(1);
   });
 
   it('offers recovery when the requested page no longer has products', async () => {

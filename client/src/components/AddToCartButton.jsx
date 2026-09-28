@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
-import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 
 export function AddToCartButton({
   product,
@@ -12,7 +11,6 @@ export function AddToCartButton({
 }) {
   const { user } = useAuth();
   const { addItem } = useCart();
-  const invalidateCatalog = useInvalidateCatalog();
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle');
@@ -39,8 +37,6 @@ export function AddToCartButton({
     } catch (addError) {
       setError(addError.message);
       setStatus('idle');
-    } finally {
-      void invalidateCatalog();
     }
   };
 

@@ -1,8 +1,10 @@
 # Floréa Haven UI/UX Improvement Implementation Plan
 
-**Status:** In progress — Phases 2, 3, 5, and 6 implemented in code; Phase 4 catalog foundation implemented; Figma and connected-browser visual QA remain pending
+**Status:** In progress — Phases 2, 3, 5, 6, and 7 implemented in code; Phase 4 catalog, cart, and customer-order foundation implemented; Figma and connected-browser visual QA remain pending
 **Scope:** Customer storefront, authentication, checkout, and administrator shell
 **Primary goal:** Evolve the existing interface into a modern, responsive, polished botanical-commerce experience while preserving Floréa Haven's soft pink floral and minimalist aesthetic, without changing the server's role as the authority for identity, pricing, inventory, carts, and orders.
+
+> **Backend update (2026-09-28):** The API is now Python Flask under [ADR 0002](docs/decisions/0002-python-flask-backend.md). The React UI/UX scope and outstanding visual QA in this plan are unchanged.
 
 ## Outcomes
 
@@ -400,15 +402,15 @@ Implementation note (2026-09-01): the production code and automated checks are c
 
 - [x] Install and configure TanStack Query.
 - [ ] Make API GET functions signal-aware and preserve abort errors.
-- [ ] Add normalized query keys and catalog/cart/order hooks.
+- [x] Add normalized query keys and catalog/cart/order hooks.
 - [x] Migrate Home, catalog, and product detail away from `useAsync`.
 - [ ] Migrate cart, checkout, customer orders, and admin queries.
 - [ ] Implement cache ownership, retry, refresh, and invalidation rules.
-- [ ] Remove `useAsync.js` only after no imports remain.
+- [x] Remove `useAsync.js` only after no imports remain.
 
 **Exit gate:** Duplicate consumers share a response, stale content remains visible during refresh, obsolete requests cancel cleanly, and mutations update/invalidate the right views.
 
-**Phase 6 prerequisite delivered:** Public catalog/category/detail queries now use normalized keys, cancellation, bounded retries, foreground polling, and shared inventory updates. Catalog GETs accept signals and preserve abort errors. Cart additions, checkout, product administration, and order cancellation invalidate public catalog data. Authenticated cart/order/admin query migration and ownership rules remain Phase 4 work; `useAsync` remains for customer orders.
+**Phase 7 foundation extension delivered:** Public catalog/category/detail queries and authenticated cart/customer-order queries now use normalized keys, cancellation, bounded retries, focus/reconnect refresh, and shared cache updates. Cart mutations write the returned server cart into the user-scoped cache and invalidate public inventory. Checkout success empties the cached cart, refreshes order lists and inventory, and seeds the new order detail. Customer cache data is removed when identity changes, and no `useAsync` imports remain. Admin query migration and its remaining ownership rules are still Phase 4 work.
 
 ### Phase 5 — Navigation, user identity, and auth flow
 
@@ -440,12 +442,16 @@ Implementation note (2026-09-01): both responsive shells, role-based landing rul
 
 ### Phase 7 — Cart, checkout, and order experience
 
-- [ ] Show available and requested quantities per cart/checkout line.
-- [ ] Add checkout last-checked/updating feedback.
-- [ ] Refresh immediately before submission without clearing form input.
-- [ ] Improve conflict messaging and focus management.
-- [ ] Apply responsive layout, shared surfaces, motion, and skeletons.
-- [ ] Preserve historical order semantics and confirmation clarity.
+- [x] Show available and requested quantities per cart/checkout line.
+- [x] Add checkout last-checked/updating feedback.
+- [x] Refresh immediately before submission without clearing form input.
+- [x] Improve conflict messaging and focus management.
+- [x] Apply responsive layout, shared surfaces, motion, and skeletons.
+- [x] Preserve historical order semantics and confirmation clarity.
+
+**Implementation notes:** Cart and checkout lines show current available stock beside the requested quantity and disable progression for inactive, out-of-stock, or insufficient-stock items. Checkout refreshes on mount, every 10 seconds while visible, on focus/reconnect, and immediately before submission while retaining the delivery form. Stock conflicts update the server-backed cart, highlight affected lines, move focus to a recovery explanation, and preserve revision/idempotency protection. Cart, checkout, order history, detail, and confirmation now use responsive shared surfaces and content-shaped skeletons; completed orders remain clearly labeled immutable purchase records.
+
+**Automated verification:** `npm run lint`, `npm test` (62 client tests and 40 server tests), and `npm run build` pass. Coverage includes exact cart/checkout stock quantities, insufficient-stock correction, pre-submit conflict recovery with retained address input and focused messaging, checkout polling cleanup, cart mutation inventory invalidation, and historical order copy.
 
 **Exit gate:** A stock change is clear and recoverable, address input is preserved, and the server remains the final checkout authority.
 

@@ -118,7 +118,6 @@ describe('admin catalog flows', () => {
 
   it('updates inventory and confirms product deactivation', async () => {
     let currentProduct = product;
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockImplementation((input, options) => {
@@ -175,7 +174,13 @@ describe('admin catalog flows', () => {
       screen.getByRole('button', { name: 'Deactivate Blush Garden Bouquet' }),
     );
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('order history'));
+    const dialog = screen.getByRole('alertdialog', {
+      name: 'Deactivate “Blush Garden Bouquet”?',
+    });
+    expect(dialog).toHaveTextContent('historical orders');
+    expect(screen.getByRole('button', { name: 'Keep it' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate product' }));
+
     expect(
       await screen.findByText('Blush Garden Bouquet was deactivated.'),
     ).toBeInTheDocument();

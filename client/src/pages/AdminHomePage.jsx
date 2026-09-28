@@ -44,23 +44,28 @@ export function AdminHomePage() {
   const { user } = useAuth();
 
   return (
-    <section className="py-3 sm:py-6">
-      <div className="grid gap-8 border-b border-evergreen/10 pb-9 lg:grid-cols-[1fr_auto] lg:items-end">
+    <section className="py-2 sm:py-4">
+      <div className="grid gap-8 border-b border-border pb-9 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <p className="eyebrow text-clay">Administrator dashboard</p>
           <h1 className="mt-3 max-w-3xl font-display text-5xl leading-[0.98] tracking-[-0.055em] text-evergreen sm:text-6xl">
             Welcome back, {user.name.split(' ')[0]}.
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-ink/60">
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-text-muted">
             Keep Floréa Haven's collection organized, available, and ready for every
             customer visit.
           </p>
         </div>
-        <div className="flex items-center gap-3 border border-evergreen/10 bg-surface px-5 py-4">
-          <ShieldCheck className="text-leaf" size={22} strokeWidth={1.5} />
+        <div className="flex items-center gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-low">
+          <ShieldCheck
+            className="text-success"
+            size={22}
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
           <div>
             <p className="text-xs font-bold text-evergreen">Protected workspace</p>
-            <p className="mt-1 text-xs text-ink/50">Administrator session active</p>
+            <p className="mt-1 text-xs text-text-muted">Administrator session active</p>
           </div>
         </div>
       </div>
@@ -69,16 +74,16 @@ export function AdminHomePage() {
         {tools.map(({ title, description, to, label, icon: Icon }, index) => (
           <Link
             key={to}
-            className={`group flex min-h-64 flex-col justify-between border p-7 transition hover:-translate-y-1 ${
+            className={`motion-lift group flex min-h-64 flex-col justify-between rounded-card border p-7 shadow-low ${
               index === 0
-                ? 'border-evergreen bg-evergreen text-canvas'
-                : 'border-evergreen/10 bg-surface text-ink'
+                ? 'border-brand bg-brand text-canvas'
+                : 'border-border bg-surface text-text'
             }`}
             to={to}
           >
             <div>
               <Icon
-                className={index === 0 ? 'text-blush' : 'text-leaf'}
+                className={index === 0 ? 'text-brand-soft' : 'text-floral-accent'}
                 size={25}
                 strokeWidth={1.5}
                 aria-hidden="true"
@@ -89,7 +94,7 @@ export function AdminHomePage() {
                 {title}
               </h2>
               <p
-                className={`mt-3 text-sm leading-6 ${index === 0 ? 'text-canvas/70' : 'text-ink/55'}`}
+                className={`mt-3 text-sm leading-6 ${index === 0 ? 'text-canvas/80' : 'text-text-muted'}`}
               >
                 {description}
               </p>

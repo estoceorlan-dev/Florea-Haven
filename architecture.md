@@ -14,14 +14,14 @@ The architecture is intentionally kept simple and suitable for a student project
 |---|---|---|
 | Frontend | React.js | Build the interactive user interface |
 | Styling | Tailwind CSS | Responsive and aesthetic UI styling |
-| Backend | Node.js + Express.js | REST API and server-side business logic |
+| Backend | Python + Flask | REST API and server-side business logic |
 | Database | PostgreSQL | Store users, products, orders, and related data |
-| Hosting | Vercel | Deploy the web application |
-| API Communication | REST API / JSON | Communication between React and Node.js |
+| Hosting | Python WSGI host + HTTPS proxy | Serve Flask and the built React application |
+| API Communication | REST API / JSON | Communication between React and Flask |
 | Authentication | JWT | Secure user authentication and authorization |
 | Version Control | Git + GitHub | Source-code management and collaboration |
 
-> **Note:** Express.js is used as the Node.js backend framework. PostgreSQL should be hosted using a managed PostgreSQL provider compatible with the deployment environment if Vercel's serverless environment is used.
+> **Backend migration:** [ADR 0002](docs/decisions/0002-python-flask-backend.md) replaces Express with Flask and Psycopg. React and the PostgreSQL schema are retained. PostgreSQL is required for development and tests.
 
 ---
 
@@ -45,11 +45,11 @@ The architecture is intentionally kept simple and suitable for a student project
                                     │
                                     ▼
                          ┌──────────────────────┐
-                         │   Node.js + Express  │
+                         │   Python + Flask     │
                          │      REST API        │
                          └──────────┬───────────┘
                                     │
-                                    │ SQL / ORM
+                                    │ SQL / Psycopg
                                     ▼
                          ┌──────────────────────┐
                          │     PostgreSQL       │
@@ -120,39 +120,25 @@ src/
 
 ## 5. Backend Architecture
 
-The Node.js backend provides the REST API and contains the application's business logic.
+The Python Flask backend provides the REST API and contains the application's business logic.
 
-A simple layered structure is recommended:
+The implemented backend is organized by feature:
 
 ```text
-server/
-├── controllers/
-│   ├── authController
-│   ├── productController
-│   ├── categoryController
-│   ├── cartController
-│   └── orderController
-│
-├── routes/
-│   ├── authRoutes
-│   ├── productRoutes
-│   ├── categoryRoutes
-│   ├── cartRoutes
-│   └── orderRoutes
-│
-├── middleware/
-│   ├── authMiddleware
-│   ├── adminMiddleware
-│   └── errorMiddleware
-│
-├── models/
-│
-├── config/
-│   └── database
-│
-├── utils/
-│
-└── server.js
+backend/
+  florea/
+    __init__.py     Flask factory, JSON handling, security headers, frontend serving
+    auth.py         Passwords, JWT cookies, roles, authentication rate limits
+    catalog.py      Public catalog and administrator category/product operations
+    cart.py         Persistent cart and revision calculation
+    orders.py       Checkout, customer history, fulfillment, transactional cancellation
+    validation.py  Request validation and normalized inputs
+    db.py          Psycopg connections and transaction helpers
+    errors.py      API error envelope helpers
+  migrations/      Ordered SQL files and existing migration ledger
+  seeds/           Catalog seed data
+  tests/           PostgreSQL integration and compatibility tests
+  manage.py        Server and database commands
 ```
 
 ### Backend Responsibilities
@@ -354,7 +340,7 @@ React Products Page
 GET /api/products
    │
    ▼
-Node.js / Express
+Python / Flask
    │
    ▼
 PostgreSQL
@@ -402,33 +388,17 @@ Checkout uses Cash on Delivery for the MVP and creates a `pending` order. Admini
 
 ## 10. Deployment Architecture
 
-Vercel will be used for deployment. The production baseline is one public site: Vite serves the React frontend and routes `/api` to the Express serverless entry point. This same-origin layout keeps authenticated cookies first-party.
+The production application uses one public origin. Waitress serves Flask, which handles `/api` and serves the static React build and client-side deep links. Node.js is used to build React, not to run the production API. An HTTPS reverse proxy or hosting platform terminates TLS.
 
 ```text
-                         Internet
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    Vercel     │
-                    │               │
-                    │ React Frontend│
-                    └───────┬───────┘
-                            │
-                            │ HTTPS / REST
-                            ▼
-                    ┌───────────────┐
-                    │ Node.js API   │
-                    │ / Serverless  │
-                    │ Functions     │
-                    └───────┬───────┘
-                            │
-                            │ Secure DB Connection
-                            ▼
-                    ┌───────────────┐
-                    │  PostgreSQL   │
-                    │ Managed DB    │
-                    └───────────────┘
+Browser -> HTTPS host/proxy -> Waitress / Flask -> PostgreSQL
+                                  |
+                                  +-> client/dist (React assets and deep links)
 ```
+
+During development, Vite runs on port 5173 and proxies `/api` to Flask on port 4000. PostgreSQL runs persistently; tests use separate random schemas. Existing schema migrations are reused unchanged.
+
+Set `APP_ENV=production`, a stable `JWT_SECRET`, the public `CLIENT_ORIGIN`, and `DATABASE_URL`. The initial deployment uses one Waitress process because authentication limits default to process memory. Multiple instances require shared limiter storage. See the README for commands and verified TLS configuration.
 
 ### Environment Variables
 
@@ -454,7 +424,7 @@ The project only needs basic security appropriate for a student e-commerce appli
 - Store browser JWTs only in secure, HTTP-only, same-site cookies and verify origins on state-changing requests.
 - Protect admin routes with role-based authorization.
 - Validate user input on the backend.
-- Use parameterized queries or an ORM to prevent SQL injection.
+- Use parameterized Psycopg queries to prevent SQL injection.
 - Never expose database credentials to the frontend.
 - Use HTTPS in production.
 - Store secrets in environment variables.
@@ -464,29 +434,15 @@ The project only needs basic security appropriate for a student e-commerce appli
 
 ## 12. Recommended Project Structure
 
-A simple repository structure can be:
-
 ```text
 florea-haven/
-│
-├── client/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── ...
-│
-├── server/
-│   ├── controllers/
-│   ├── routes/
-│   ├── middleware/
-│   ├── models/
-│   ├── config/
-│   ├── server.js
-│   └── package.json
-│
-├── .gitignore
-├── README.md
-└── package.json
+  client/                 React application
+  backend/                Python Flask application, SQL migrations, pytest tests
+  scripts/backend.mjs     Cross-platform Python launcher for npm commands
+  docker-compose.yml      Local PostgreSQL
+  docs/                   API contract and architecture decisions
+  README.md
+  package.json            Frontend and development orchestration
 ```
 
 ---
@@ -526,7 +482,7 @@ These can be added later if there is enough development time, ensure scalability
 Floréa Haven follows a straightforward **three-layer architecture**:
 
 1. **Presentation Layer** — React + Tailwind CSS provides the customer and administrator interfaces.
-2. **Application Layer** — Node.js + Express.js handles authentication, business logic, validation, and REST API requests.
+2. **Application Layer** — Python + Flask handles authentication, business logic, validation, and REST API requests.
 3. **Data Layer** — PostgreSQL stores users, products, inventory, carts, and orders.
 
-This architecture is simple enough for a student project while remaining organized, maintainable, and suitable for deployment through Vercel.
+This architecture is simple enough for a student project while remaining organized, maintainable, and suitable for deployment on a Python WSGI host.

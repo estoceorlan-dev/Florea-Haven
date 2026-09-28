@@ -1,5 +1,7 @@
 # Floréa Haven — Gradual Implementation Plan
 
+> **Backend migration (2026-09-28):** Python Flask replaces Express under [ADR 0002](docs/decisions/0002-python-flask-backend.md). React and the PostgreSQL schema remain. The migration is complete; unfinished product and UI/UX phases below remain pending.
+
 ## 1. Purpose
 
 This plan turns the system described in [`architecture.md`](./architecture.md) into small, testable increments. Each phase should leave the application in a working state and should be completed before features that depend on it begin.
@@ -68,11 +70,11 @@ Remove decisions that could cause rework before writing application code.
 - [x] Use Cash on Delivery as the only MVP payment method; do not collect or store card details.
 - [x] Define the order flow as `pending → confirmed → preparing → shipped → delivered`, with cancellation allowed only from `pending` or `confirmed`.
 - [x] Require sign-in before adding persistent cart items; defer guest carts and merging.
-- [x] Use `pg`, parameterized SQL, and ordered SQL migration files consistently throughout the backend.
+- [x] Use Psycopg, parameterized SQL, and ordered SQL migration files consistently throughout the backend.
 - [x] Transport browser JWTs in a secure, HTTP-only, same-site cookie and verify request origins for state-changing operations.
 - [x] Define standard API response and error formats.
 - [x] Use administrator-provided HTTP(S) image URLs with a safe client placeholder as the initial baseline; Phase 8 supersedes manual URLs with managed uploads.
-- [x] Support Node.js 22+ and npm 10+.
+- [x] Support Python 3.12+, Node.js 22+, and npm 10+.
 
 ### Deliverables
 
@@ -97,9 +99,9 @@ Create a reproducible local development environment and prove communication acro
 
 ### Repository and Tooling
 
-- [x] Initialize the root project and `client/` and `server/` applications.
+- [x] Initialize the root project and `client/` and `backend/` applications.
 - [x] Configure React and Tailwind CSS in `client/`.
-- [x] Configure Node.js and Express in `server/`.
+- [x] Configure Python Flask in `backend/`.
 - [x] Add linting, formatting, and test commands.
 - [x] Add `.gitignore`, `.env.example`, and setup documentation.
 - [x] Add root scripts for starting and testing both applications.
@@ -107,7 +109,7 @@ Create a reproducible local development environment and prove communication acro
 
 ### Database and API
 
-- [x] Connect the server to PostgreSQL through `DATABASE_URL`, with an in-memory development/test fallback.
+- [x] Connect the server to PostgreSQL through `DATABASE_URL`, with isolated PostgreSQL schemas for tests.
 - [x] Configure ordered SQL migration and seed scripts.
 - [x] Add `GET /api/health` with application and database health information.
 - [x] Add centralized 404 and error-handling middleware.
@@ -128,7 +130,7 @@ Create a reproducible local development environment and prove communication acro
 
 ### Exit Criteria
 
-- `client/` and `server/` run locally using documented commands.
+- `client/` and `backend/` run locally using documented commands.
 - The frontend successfully calls the health endpoint.
 - The API successfully queries PostgreSQL.
 - No real secret is committed to Git.
@@ -507,9 +509,9 @@ Deploy a production-ready build and verify it in the actual hosting environment.
 ### Infrastructure
 
 - [ ] Provision production PostgreSQL in a region suitable for the deployment.
-- [ ] Configure production environment variables in Vercel.
+- [ ] Configure production environment variables on the selected Python host.
 - [ ] Provision the selected image provider and configure its production credentials, upload restrictions, folders/prefixes, and allowed origins.
-- [ ] Configure the React frontend and Node/Express API for the selected Vercel deployment model.
+- [ ] Serve the built React frontend and Flask API through Waitress behind HTTPS on one public origin.
 - [ ] Confirm database connection handling is suitable for serverless execution, using pooling where required.
 - [ ] Configure production CORS, cookie domain/security, API URLs, and allowed origins.
 

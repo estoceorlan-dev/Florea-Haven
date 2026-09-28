@@ -4,7 +4,7 @@ import { BrandMark } from './BrandMark.jsx';
 
 export function AuthShell({ eyebrow, title, introduction, children }) {
   return (
-    <div className="grid min-h-screen bg-ivory lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="grid min-h-screen bg-canvas lg:grid-cols-[1.05fr_0.95fr]">
       <section className="flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="flex items-center justify-between">
           <Link to="/" aria-label="Floréa Haven home">
@@ -16,13 +16,13 @@ export function AuthShell({ eyebrow, title, introduction, children }) {
           </Link>
         </div>
 
-        <div className="mx-auto flex w-full max-w-md flex-1 items-center py-14">
-          <div className="w-full">
+        <div className="mx-auto flex w-full max-w-lg flex-1 items-center py-14">
+          <div className="w-full rounded-card border border-border bg-surface p-6 shadow-low sm:p-8">
             <p className="eyebrow text-clay">{eyebrow}</p>
             <h1 className="mt-3 font-display text-5xl leading-[0.98] tracking-[-0.055em] text-evergreen sm:text-6xl">
               {title}
             </h1>
-            <p className="mt-5 max-w-sm text-sm leading-7 text-ink/60">
+            <p className="mt-5 max-w-sm text-sm leading-7 text-text-muted">
               {introduction}
             </p>
             <div className="mt-9">{children}</div>

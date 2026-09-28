@@ -1,11 +1,17 @@
-import { ArrowLeft, Banknote, LockKeyhole } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { AlertTriangle, ArrowLeft, Banknote, LockKeyhole } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
+import { AvailabilityStatus } from '../components/ui/AvailabilityStatus.jsx';
+import { CartStockStatus } from '../components/ui/CartStockStatus.jsx';
+import { CheckoutSkeleton } from '../components/ui/Skeleton.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { useCart } from '../hooks/useCart.js';
-import { orderApi } from '../services/api.js';
+import { queryKeys } from '../queries/queryKeys.js';
+import { emptyCart } from '../queries/useCartQuery.js';
 import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
+import { orderApi } from '../services/api.js';
 import { formatCurrency } from '../utils/currency.js';
 
 const initialAddress = (name) => ({
@@ -20,6 +26,28 @@ const initialAddress = (name) => ({
 });
 
 const newIdempotencyKey = () => globalThis.crypto.randomUUID();
+const isLineUnavailable = (item) =>
+  item.availability !== 'available' ||
+  item.product.is_active === false ||
+  item.product.stock_quantity < item.quantity;
+const hasUnavailableLines = (cart) =>
+  cart.summary.has_unavailable_items || cart.items.some(isLineUnavailable);
+const changedLineIds = (before, after) => {
+  const previousItems = new Map(before.items.map((item) => [item.id, item]));
+  return new Set(
+    after.items
+      .filter((item) => {
+        const previous = previousItems.get(item.id);
+        return (
+          !previous ||
+          previous.availability !== item.availability ||
+          previous.product.stock_quantity !== item.product.stock_quantity ||
+          previous.unit_price !== item.unit_price
+        );
+      })
+      .map((item) => item.id),
+  );
+};
 
 function AddressField({
   field,
@@ -32,11 +60,11 @@ function AddressField({
   ...inputProps
 }) {
   const errorId = error ? `checkout-${field}-error` : undefined;
-
   return (
     <div className="form-field">
       <label htmlFor={`checkout-${field}`}>
-        {label} {optional && <span className="font-normal text-ink/45">Optional</span>}
+        {label}{' '}
+        {optional && <span className="font-normal text-text-muted">Optional</span>}
       </label>
       <input
         id={`checkout-${field}`}
@@ -59,26 +87,53 @@ function AddressField({
 
 export function CheckoutPage() {
   const invalidateCatalog = useInvalidateCatalog();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { cart, error: cartError, isLoading, reload } = useCart();
+  const {
+    cart,
+    error: cartError,
+    refreshError,
+    isLoading,
+    isRefreshing,
+    lastUpdated,
+    reload,
+    setCart,
+    setCheckoutRefreshEnabled,
+  } = useCart();
   const navigate = useNavigate();
   const [address, setAddress] = useState(() => initialAddress(user.name));
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshFailure, setRefreshFailure] = useState(null);
+  const [submitStage, setSubmitStage] = useState('idle');
+  const [affectedItemIds, setAffectedItemIds] = useState(new Set());
+  const priorCart = useRef(null);
+  const noticeRef = useRef(null);
   const submission = useRef({ fingerprint: null, key: null });
 
-  if (isLoading) {
-    return (
-      <div className="page-shell py-20" aria-busy="true">
-        <div className="h-14 w-64 animate-pulse bg-evergreen/10" />
-        <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_360px]">
-          <div className="h-[520px] animate-pulse bg-evergreen/10" />
-          <div className="h-80 animate-pulse bg-evergreen/10" />
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setCheckoutRefreshEnabled(true);
+    void reload()
+      .then(() => setRefreshFailure(null))
+      .catch(setRefreshFailure);
+    return () => setCheckoutRefreshEnabled(false);
+  }, [reload, setCheckoutRefreshEnabled]);
 
+  useEffect(() => {
+    if (priorCart.current) {
+      const changed = changedLineIds(priorCart.current, cart);
+      if (changed.size > 0) {
+        // Availability changes remain highlighted until the shopper leaves checkout.
+        setAffectedItemIds((current) => new Set([...current, ...changed]));
+      }
+    }
+    priorCart.current = cart;
+  }, [cart]);
+
+  useEffect(() => {
+    if (error) noticeRef.current?.focus();
+  }, [error]);
+
+  if (isLoading) return <CheckoutSkeleton />;
   if (cartError) {
     return (
       <div className="page-shell py-20">
@@ -86,229 +141,340 @@ export function CheckoutPage() {
       </div>
     );
   }
-
   if (cart.items.length === 0) return <Navigate to="/cart" replace />;
 
+  const unavailable = hasUnavailableLines(cart);
   const fieldError = (field) =>
     (Array.isArray(error?.details) ? error.details : []).find(
       (detail) => detail.field === `deliveryAddress.${field}`,
     )?.message;
-
-  const updateAddress = (field, value) => {
+  const updateAddress = (field, value) =>
     setAddress((current) => ({ ...current, [field]: value }));
+
+  const showAvailabilityConflict = (latestCart, message) => {
+    const changed = changedLineIds(cart, latestCart);
+    const unavailableIds = latestCart.items
+      .filter(isLineUnavailable)
+      .map((item) => item.id);
+    setCart(latestCart);
+    setAffectedItemIds(new Set([...changed, ...unavailableIds]));
+    const conflict = new Error(message);
+    conflict.code = 'AVAILABILITY_CHANGED';
+    setError(conflict);
   };
 
   const submit = async (event) => {
     event.preventDefault();
-    if (isSubmitting || cart.summary.has_unavailable_items) return;
-
+    if (submitStage !== 'idle' || unavailable) return;
     setError(null);
-    setIsSubmitting(true);
+    setSubmitStage('checking');
 
+    let latestCart;
+    try {
+      latestCart = await reload();
+      setRefreshFailure(null);
+    } catch (loadError) {
+      const preflightError = new Error(
+        'We could not check current availability. Your delivery details are saved on this page; try the stock check again.',
+      );
+      preflightError.code = 'STOCK_CHECK_FAILED';
+      preflightError.cause = loadError;
+      setError(preflightError);
+      setSubmitStage('idle');
+      return;
+    }
+
+    if (latestCart.items.length === 0) {
+      setCart(latestCart);
+      setSubmitStage('idle');
+      return;
+    }
+    if (hasUnavailableLines(latestCart)) {
+      showAvailabilityConflict(
+        latestCart,
+        'Availability changed for the highlighted item. Correct its quantity or remove it before placing your order.',
+      );
+      setSubmitStage('idle');
+      return;
+    }
+
+    setCart(latestCart);
+    setSubmitStage('placing');
     const input = {
-      cartRevision: cart.revision,
+      cartRevision: latestCart.revision,
       paymentMethod: 'cash_on_delivery',
       deliveryAddress: address,
     };
     const fingerprint = JSON.stringify(input);
-
     if (submission.current.fingerprint !== fingerprint) {
       submission.current = { fingerprint, key: newIdempotencyKey() };
     }
 
     try {
       const payload = await orderApi.placeOrder(input, submission.current.key);
+      const newOrder = payload.data.order;
+      setCart(emptyCart);
+      queryClient.setQueryData(queryKeys.order(user.id, newOrder.id), {
+        data: newOrder,
+      });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders(user.id) });
       void invalidateCatalog();
-      await reload().catch(() => undefined);
-      navigate(`/orders/${payload.data.order.id}/confirmation`, { replace: true });
+      navigate(`/orders/${newOrder.id}/confirmation`, { replace: true });
     } catch (submissionError) {
       void invalidateCatalog();
-      setError(submissionError);
       if (
         ['CART_CHANGED', 'PRODUCT_INACTIVE', 'INSUFFICIENT_STOCK'].includes(
           submissionError.code,
         )
       ) {
-        await reload().catch(() => undefined);
+        let refreshedCart = submissionError.details?.cart;
+        if (!refreshedCart) {
+          refreshedCart = await reload().catch(() => null);
+        }
+        if (refreshedCart) {
+          showAvailabilityConflict(refreshedCart, submissionError.message);
+        } else {
+          setError(submissionError);
+        }
+      } else {
+        setError(submissionError);
       }
     } finally {
-      setIsSubmitting(false);
+      setSubmitStage('idle');
     }
   };
 
   return (
-    <section className="page-shell py-14 sm:py-20">
-      <Link className="text-link" to="/cart">
+    <section className="page-shell py-12 sm:py-16">
+      <Link className="text-link min-h-11" to="/cart">
         <ArrowLeft size={14} aria-hidden="true" />
         Back to cart
       </Link>
-      <div className="mt-8 border-b border-evergreen/10 pb-8">
+      <div className="mt-6 border-b border-border pb-8">
         <p className="eyebrow text-clay">Cash on Delivery</p>
         <h1 className="mt-3 font-display text-5xl tracking-[-0.055em] text-evergreen sm:text-6xl">
           Where shall we send it?
         </h1>
-        <p className="mt-4 max-w-xl text-sm leading-7 text-ink/55">
+        <p className="mt-4 max-w-xl text-sm leading-7 text-text-muted">
           Review your garden finds and share the delivery details for this order.
         </p>
       </div>
-
       <form
-        className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16"
+        className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12"
         onSubmit={submit}
         noValidate
       >
-        <div>
+        <div className="min-w-0">
           {error && (
-            <div className="form-alert mb-7" role="alert">
-              {error.message}
+            <div
+              ref={noticeRef}
+              className="form-alert mb-6 outline-none"
+              role="alert"
+              tabIndex="-1"
+            >
+              <div className="flex gap-3">
+                <AlertTriangle
+                  className="mt-0.5 shrink-0"
+                  size={18}
+                  aria-hidden="true"
+                />
+                <div>
+                  <strong className="block">Please review your order</strong>
+                  <p className="mt-1">{error.message}</p>
+                  {[
+                    'AVAILABILITY_CHANGED',
+                    'CART_CHANGED',
+                    'PRODUCT_INACTIVE',
+                    'INSUFFICIENT_STOCK',
+                  ].includes(error.code) && (
+                    <Link className="text-link mt-3 min-h-11" to="/cart">
+                      Correct highlighted items in cart
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
           )}
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <section
+            className="rounded-card border border-border bg-surface p-5 shadow-low sm:p-7"
+            aria-labelledby="delivery-heading"
+          >
+            <div className="mb-6">
+              <p className="eyebrow text-clay">Delivery</p>
+              <h2
+                id="delivery-heading"
+                className="mt-2 font-display text-3xl text-evergreen"
+              >
+                Your delivery details
+              </h2>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <AddressField
+                  field="recipientName"
+                  label="Recipient name"
+                  value={address.recipientName}
+                  error={fieldError('recipientName')}
+                  onChange={updateAddress}
+                  autoComplete="name"
+                  required
+                  minLength="2"
+                  maxLength="80"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <AddressField
+                  field="phone"
+                  label="Phone number"
+                  value={address.phone}
+                  error={fieldError('phone')}
+                  onChange={updateAddress}
+                  autoComplete="tel"
+                  type="tel"
+                  required
+                  minLength="7"
+                  maxLength="30"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <AddressField
+                  field="addressLine1"
+                  label="Address line 1"
+                  value={address.addressLine1}
+                  error={fieldError('addressLine1')}
+                  onChange={updateAddress}
+                  autoComplete="address-line1"
+                  required
+                  minLength="5"
+                  maxLength="160"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <AddressField
+                  field="addressLine2"
+                  label="Address line 2"
+                  value={address.addressLine2}
+                  error={fieldError('addressLine2')}
+                  onChange={updateAddress}
+                  autoComplete="address-line2"
+                  maxLength="160"
+                  optional
+                />
+              </div>
               <AddressField
-                field="recipientName"
-                label="Recipient name"
-                value={address.recipientName}
-                error={fieldError('recipientName')}
+                field="city"
+                label="City"
+                value={address.city}
+                error={fieldError('city')}
                 onChange={updateAddress}
-                autoComplete="name"
+                autoComplete="address-level2"
                 required
                 minLength="2"
                 maxLength="80"
               />
-            </div>
-            <div className="sm:col-span-2">
               <AddressField
-                field="phone"
-                label="Phone number"
-                value={address.phone}
-                error={fieldError('phone')}
+                field="province"
+                label="Province"
+                value={address.province}
+                error={fieldError('province')}
                 onChange={updateAddress}
-                autoComplete="tel"
-                type="tel"
+                autoComplete="address-level1"
                 required
-                minLength="7"
-                maxLength="30"
+                minLength="2"
+                maxLength="80"
               />
-            </div>
-            <div className="sm:col-span-2">
               <AddressField
-                field="addressLine1"
-                label="Address line 1"
-                value={address.addressLine1}
-                error={fieldError('addressLine1')}
+                field="postalCode"
+                label="Postal code"
+                value={address.postalCode}
+                error={fieldError('postalCode')}
                 onChange={updateAddress}
-                autoComplete="address-line1"
+                autoComplete="postal-code"
                 required
-                minLength="5"
-                maxLength="160"
+                minLength="3"
+                maxLength="12"
               />
-            </div>
-            <div className="sm:col-span-2">
               <AddressField
-                field="addressLine2"
-                label="Address line 2"
-                value={address.addressLine2}
-                error={fieldError('addressLine2')}
+                field="country"
+                label="Country"
+                value={address.country}
+                error={fieldError('country')}
                 onChange={updateAddress}
-                autoComplete="address-line2"
-                maxLength="160"
-                optional
+                autoComplete="country-name"
+                readOnly
               />
             </div>
-            <AddressField
-              field="city"
-              label="City"
-              value={address.city}
-              error={fieldError('city')}
-              onChange={updateAddress}
-              autoComplete="address-level2"
-              required
-              minLength="2"
-              maxLength="80"
+          </section>
+          <div className="mt-5 flex gap-3 rounded-card border border-border bg-surface p-5 text-sm text-text-muted shadow-low">
+            <Banknote
+              className="mt-0.5 shrink-0 text-leaf"
+              size={20}
+              aria-hidden="true"
             />
-            <AddressField
-              field="province"
-              label="Province"
-              value={address.province}
-              error={fieldError('province')}
-              onChange={updateAddress}
-              autoComplete="address-level1"
-              required
-              minLength="2"
-              maxLength="80"
-            />
-            <AddressField
-              field="postalCode"
-              label="Postal code"
-              value={address.postalCode}
-              error={fieldError('postalCode')}
-              onChange={updateAddress}
-              autoComplete="postal-code"
-              required
-              minLength="3"
-              maxLength="12"
-            />
-            <AddressField
-              field="country"
-              label="Country"
-              value={address.country}
-              error={fieldError('country')}
-              onChange={updateAddress}
-              autoComplete="country-name"
-              readOnly
-            />
-          </div>
-
-          <div className="mt-8 flex gap-3 border border-evergreen/10 bg-surface p-5 text-sm text-ink/60">
-            <Banknote className="mt-0.5 shrink-0 text-leaf" size={20} />
             <div>
-              <strong className="block text-evergreen">Cash on Delivery</strong>
-              Pay the exact order total when your delivery arrives. No card details are
+              <strong className="block text-evergreen">Cash on Delivery</strong>Pay the
+              exact order total when your delivery arrives. No card details are
               collected.
             </div>
           </div>
         </div>
-
-        <aside className="h-fit bg-mist p-6 lg:sticky lg:top-28 lg:p-8">
+        <aside
+          className="h-fit rounded-card border border-border bg-surface-muted p-6 shadow-low lg:sticky lg:top-28 lg:p-8"
+          aria-busy={isRefreshing || submitStage === 'checking'}
+        >
           <p className="eyebrow text-clay">Order summary</p>
-          <div className="mt-5 space-y-4 border-b border-evergreen/10 pb-5">
+          <AvailabilityStatus
+            className="mt-3"
+            lastUpdated={lastUpdated}
+            isUpdating={isRefreshing || submitStage === 'checking'}
+            error={refreshError ?? refreshFailure}
+            onRetry={reload}
+          />
+          <div className="mt-5 space-y-3 border-b border-border pb-5">
             {cart.items.map((item) => (
-              <div className="flex justify-between gap-4 text-sm" key={item.id}>
-                <span className="text-ink/60">
-                  {item.product.name} × {item.quantity}
-                </span>
-                <span className="shrink-0 font-semibold text-evergreen">
-                  {formatCurrency(item.line_total)}
-                </span>
-              </div>
+              <article
+                className={`rounded-control border p-3 text-sm transition ${affectedItemIds.has(item.id) || isLineUnavailable(item) ? 'cart-line-changed' : 'border-border bg-surface'}`}
+                key={item.id}
+              >
+                <div className="flex justify-between gap-3">
+                  <span className="min-w-0 break-words text-text-muted">
+                    {item.product.name} × {item.quantity}
+                  </span>
+                  <span className="shrink-0 font-semibold text-evergreen">
+                    {formatCurrency(item.line_total)}
+                  </span>
+                </div>
+                <CartStockStatus className="mt-2 flex-wrap" item={item} />
+              </article>
             ))}
           </div>
-          <div className="mt-5 flex items-center justify-between">
+          <div className="mt-5 flex items-center justify-between gap-4">
             <strong className="font-display text-2xl text-evergreen">Total</strong>
             <strong className="text-lg text-evergreen">
               {formatCurrency(cart.summary.subtotal)}
             </strong>
           </div>
-
-          {cart.summary.has_unavailable_items && (
+          {unavailable && (
             <div className="form-alert mt-5" role="alert">
-              Your cart has an unavailable item. Return to the cart and resolve it
-              before placing the order.
+              Correct or remove the highlighted item in your cart before placing the
+              order.
             </div>
           )}
-
           <button
             className="button-primary mt-6 w-full"
             type="submit"
-            disabled={isSubmitting || cart.summary.has_unavailable_items}
+            disabled={submitStage !== 'idle' || unavailable}
           >
             <LockKeyhole size={15} aria-hidden="true" />
-            {isSubmitting ? 'Placing your order…' : 'Place order'}
+            {submitStage === 'checking'
+              ? 'Checking stock…'
+              : submitStage === 'placing'
+                ? 'Placing your order…'
+                : 'Place order'}
           </button>
-          <p className="mt-4 text-center text-xs leading-5 text-ink/45">
-            Your stock and total are checked once more before the order is confirmed.
+          <p className="mt-4 text-center text-xs leading-5 text-text-muted">
+            We check current stock immediately before submitting. The server confirms
+            availability and creates the order once.
           </p>
         </aside>
       </form>

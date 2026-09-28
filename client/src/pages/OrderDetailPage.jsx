@@ -2,29 +2,21 @@ import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { OrderDetails } from '../components/OrderDetails.jsx';
-import { useAsync } from '../hooks/useAsync.js';
-import { orderApi } from '../services/api.js';
+import { OrderSkeleton } from '../components/ui/Skeleton.jsx';
+import { useAuth } from '../hooks/useAuth.js';
+import { useOrderQuery } from '../queries/useOrderQuery.js';
 
 export function OrderDetailPage() {
   const { orderId } = useParams();
-  const order = useAsync(() => orderApi.getOrder(orderId), [orderId]);
+  const { user } = useAuth();
+  const order = useOrderQuery(user?.id, orderId);
 
-  if (order.isLoading) {
-    return (
-      <div className="page-shell py-20" aria-busy="true">
-        <div className="h-10 w-40 animate-pulse bg-evergreen/10" />
-        <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_360px]">
-          <div className="h-96 animate-pulse bg-evergreen/10" />
-          <div className="h-80 animate-pulse bg-evergreen/10" />
-        </div>
-      </div>
-    );
-  }
+  if (order.isPending) return <OrderSkeleton />;
 
   if (order.error) {
     return (
       <div className="page-shell py-20">
-        <InlineError error={order.error} onRetry={order.retry} />
+        <InlineError error={order.error} onRetry={order.refetch} />
       </div>
     );
   }

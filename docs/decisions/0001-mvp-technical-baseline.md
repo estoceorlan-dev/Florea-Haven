@@ -1,5 +1,7 @@
 # ADR 0001: MVP and Technical Baseline
 
+> Historical baseline. [ADR 0002](./0002-python-flask-backend.md) supersedes the Express runtime, database adapter, in-memory fallback, and deployment decisions. The business rules and API conventions below still apply.
+
 - Status: Accepted
 - Date: 2026-08-30
 - Applies to: MVP (Phases 0–9)

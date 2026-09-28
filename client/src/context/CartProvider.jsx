@@ -1,97 +1,119 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth.js';
+import { queryKeys } from '../queries/queryKeys.js';
+import { emptyCart, useCartQuery } from '../queries/useCartQuery.js';
 import { cartApi } from '../services/api.js';
 import { CartContext } from './CartContext.js';
 
-const emptyCart = {
-  items: [],
-  revision: null,
-  summary: {
-    item_count: 0,
-    distinct_items: 0,
-    subtotal: 0,
-    has_unavailable_items: false,
-  },
-};
-
 export function CartProvider({ children }) {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const [snapshot, setSnapshot] = useState({
-    ownerId: null,
-    cart: emptyCart,
-    error: null,
+  const userId = user?.id;
+  const queryClient = useQueryClient();
+  const previousOwnerId = useRef(null);
+  const [checkoutRefreshEnabled, setCheckoutRefreshEnabled] = useState(false);
+  const cartQuery = useCartQuery(userId, {
+    refetchInterval: checkoutRefreshEnabled ? 10_000 : false,
+    refetchIntervalInBackground: false,
   });
-
-  const loadCart = useCallback(async () => {
-    if (!user) return emptyCart;
-
-    try {
-      const payload = await cartApi.getCart();
-      setSnapshot({ ownerId: user.id, cart: payload.data.cart, error: null });
-      return payload.data.cart;
-    } catch (error) {
-      setSnapshot({ ownerId: user.id, cart: emptyCart, error });
-      throw error;
-    }
-  }, [user]);
+  const refetchCart = cartQuery.refetch;
 
   useEffect(() => {
-    if (!isAuthLoading && user) {
-      // Synchronize the authenticated owner with their server-backed cart.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadCart().catch(() => undefined);
+    const priorOwnerId = previousOwnerId.current;
+    if (priorOwnerId && priorOwnerId !== userId) {
+      void queryClient.cancelQueries({ queryKey: queryKeys.user(priorOwnerId) });
+      queryClient.removeQueries({ queryKey: queryKeys.user(priorOwnerId) });
     }
-  }, [isAuthLoading, loadCart, user]);
+    previousOwnerId.current = userId ?? null;
+  }, [queryClient, userId]);
 
-  const applyCartResponse = useCallback(
-    (payload) => {
-      const cart = payload.data.cart;
-      setSnapshot({ ownerId: user.id, cart, error: null });
+  const setCart = useCallback(
+    (cart) => {
+      if (userId) queryClient.setQueryData(queryKeys.cart(userId), cart);
       return cart;
     },
-    [user],
+    [queryClient, userId],
+  );
+
+  const refreshCatalog = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: queryKeys.catalog }),
+    [queryClient],
+  );
+
+  const applyCartResponse = useCallback(
+    (payload) => setCart(payload.data.cart),
+    [setCart],
+  );
+
+  const runMutation = useCallback(
+    async (mutation) => {
+      try {
+        return applyCartResponse(await mutation());
+      } catch (error) {
+        if (userId) {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.cart(userId) });
+        }
+        throw error;
+      } finally {
+        void refreshCatalog();
+      }
+    },
+    [applyCartResponse, queryClient, refreshCatalog, userId],
   );
 
   const addItem = useCallback(
-    async (productId, quantity = 1) => {
-      const payload = await cartApi.addItem(productId, quantity);
-      return applyCartResponse(payload);
-    },
-    [applyCartResponse],
+    (productId, quantity = 1) =>
+      runMutation(() => cartApi.addItem(productId, quantity)),
+    [runMutation],
   );
-
   const updateItem = useCallback(
-    async (itemId, quantity) => {
-      const payload = await cartApi.updateItem(itemId, quantity);
-      return applyCartResponse(payload);
-    },
-    [applyCartResponse],
+    (itemId, quantity) => runMutation(() => cartApi.updateItem(itemId, quantity)),
+    [runMutation],
   );
-
   const removeItem = useCallback(
-    async (itemId) => {
-      const payload = await cartApi.removeItem(itemId);
-      return applyCartResponse(payload);
-    },
-    [applyCartResponse],
+    (itemId) => runMutation(() => cartApi.removeItem(itemId)),
+    [runMutation],
   );
+  const reload = useCallback(async () => {
+    if (!userId) return emptyCart;
+    const result = await refetchCart({ cancelRefetch: true });
+    if (result.error) throw result.error;
+    return result.data;
+  }, [refetchCart, userId]);
 
-  const belongsToCurrentUser = Boolean(user) && snapshot.ownerId === user.id;
-  const cart = belongsToCurrentUser ? snapshot.cart : emptyCart;
-  const error = belongsToCurrentUser ? snapshot.error : null;
-  const isLoading = !isAuthLoading && Boolean(user) && snapshot.ownerId !== user.id;
-
+  const cart = user ? (cartQuery.data ?? emptyCart) : emptyCart;
+  const hasResolvedCart = Boolean(cartQuery.data);
   const value = useMemo(
     () => ({
       cart,
-      error,
-      isLoading,
+      error: hasResolvedCart ? null : cartQuery.error,
+      refreshError: hasResolvedCart ? cartQuery.error : null,
+      isLoading: !isAuthLoading && Boolean(user) && cartQuery.isPending,
+      isRefreshing: hasResolvedCart && cartQuery.isFetching,
+      lastUpdated: cartQuery.dataUpdatedAt || null,
       addItem,
       updateItem,
       removeItem,
-      reload: loadCart,
+      reload,
+      setCart,
+      setCheckoutRefreshEnabled,
     }),
-    [addItem, cart, error, isLoading, loadCart, removeItem, updateItem],
+    [
+      addItem,
+      cart,
+      cartQuery.dataUpdatedAt,
+      cartQuery.error,
+      cartQuery.isFetching,
+      cartQuery.isPending,
+      hasResolvedCart,
+      isAuthLoading,
+      reload,
+      removeItem,
+      setCart,
+      setCheckoutRefreshEnabled,
+      updateItem,
+      user,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

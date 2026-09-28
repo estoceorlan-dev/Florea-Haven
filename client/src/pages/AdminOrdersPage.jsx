@@ -1,13 +1,15 @@
 import {
   ChevronLeft,
   ChevronRight,
-  LoaderCircle,
+  PackageSearch,
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { OrderStatusBadge } from '../components/OrderStatusBadge.jsx';
+import { EmptyState, FeedbackBanner } from '../components/ui/PageState.jsx';
+import { AdminListSkeleton } from '../components/ui/Skeleton.jsx';
 import { adminOrderApi } from '../services/api.js';
 import { formatCurrency, formatDateTime } from '../utils/currency.js';
 
@@ -75,19 +77,19 @@ export function AdminOrdersPage() {
 
   return (
     <section>
-      <div className="border-b border-evergreen/10 pb-7">
+      <div className="border-b border-border pb-7">
         <p className="eyebrow text-clay">Fulfillment operations</p>
         <h1 className="mt-2 font-display text-5xl tracking-[-0.045em] text-evergreen">
           Customer orders
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/55">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
           Find new orders, review delivery details, and move each package through its
           fulfillment workflow.
         </p>
       </div>
 
       <form
-        className="mt-7 grid gap-3 border border-evergreen/10 bg-surface p-4 md:grid-cols-2 xl:grid-cols-5"
+        className="mt-7 grid gap-3 rounded-card border border-border bg-surface p-4 shadow-low md:grid-cols-2 xl:grid-cols-5"
         aria-label="Filter orders"
         onSubmit={applyFilters}
       >
@@ -164,98 +166,84 @@ export function AdminOrdersPage() {
       </form>
 
       {error && (
-        <div
-          className="form-alert mt-5 flex items-start justify-between gap-4"
-          role="alert"
-        >
-          <span>{error.message}</span>
-          <button
-            className="text-link shrink-0"
-            type="button"
-            onClick={() => setError(null)}
-          >
-            Dismiss
-          </button>
-        </div>
+        <FeedbackBanner className="mt-5" tone="error" onDismiss={() => setError(null)}>
+          {error.message}
+        </FeedbackBanner>
       )}
 
-      <div className="mt-5 overflow-hidden border border-evergreen/10 bg-surface">
+      <div className="mt-5 overflow-hidden rounded-card border border-border bg-surface shadow-low">
         {isLoading ? (
-          <div className="grid min-h-80 place-items-center" role="status">
-            <LoaderCircle className="animate-spin text-leaf" aria-hidden="true" />
-            <span className="sr-only">Loading orders</span>
-          </div>
+          <AdminListSkeleton label="Loading orders" />
         ) : orders.length === 0 ? (
-          <p className="p-12 text-center text-sm text-ink/55">
-            No orders match these filters.
-          </p>
+          <EmptyState
+            className="m-4"
+            icon={PackageSearch}
+            eyebrow="Fulfillment queue"
+            title="No matching orders."
+            description="Try a broader customer, status, or date filter."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] border-collapse text-left">
-              <thead className="bg-sage/45 text-[0.64rem] font-extrabold uppercase tracking-[0.12em] text-evergreen">
-                <tr>
-                  <th className="px-4 py-3" scope="col">
-                    Order
-                  </th>
-                  <th className="px-4 py-3" scope="col">
-                    Customer
-                  </th>
-                  <th className="px-4 py-3" scope="col">
-                    Placed
-                  </th>
-                  <th className="px-4 py-3" scope="col">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-right" scope="col">
-                    Total
-                  </th>
-                  <th className="px-4 py-3 text-right" scope="col">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-evergreen/10">
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-bold text-evergreen">
-                        #{orderNumber(order.id)}
-                      </p>
-                      <p className="mt-1 text-xs text-ink/45">
-                        {order.item_count} {order.item_count === 1 ? 'item' : 'items'}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-semibold text-evergreen">
-                        {order.customer.name}
-                      </p>
-                      <p className="mt-1 text-xs text-ink/45">{order.customer.email}</p>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-ink/60">
-                      {formatDateTime(order.created_at)}
-                    </td>
-                    <td className="px-4 py-4">
-                      <OrderStatusBadge status={order.status} />
-                    </td>
-                    <td className="px-4 py-4 text-right text-sm font-bold text-evergreen">
-                      {formatCurrency(order.total_amount)}
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <Link className="text-link" to={`/admin/orders/${order.id}`}>
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div role="table" aria-label="Customer orders">
+            <div
+              className="hidden grid-cols-[7rem_minmax(12rem,1.2fr)_minmax(10rem,1fr)_7rem_7rem_5rem] gap-4 bg-surface-muted px-5 py-3 text-[0.64rem] font-extrabold uppercase tracking-[0.12em] text-evergreen lg:grid"
+              role="row"
+            >
+              {['Order', 'Customer', 'Placed', 'Status', 'Total', 'Action'].map(
+                (label) => (
+                  <span key={label} role="columnheader">
+                    {label}
+                  </span>
+                ),
+              )}
+            </div>
+            <div className="divide-y divide-border">
+              {orders.map((order) => (
+                <article
+                  className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-[7rem_minmax(12rem,1.2fr)_minmax(10rem,1fr)_7rem_7rem_5rem] lg:items-center"
+                  key={order.id}
+                  role="row"
+                >
+                  <div role="cell">
+                    <p className="text-sm font-bold text-evergreen">
+                      #{orderNumber(order.id)}
+                    </p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      {order.item_count} {order.item_count === 1 ? 'item' : 'items'}
+                    </p>
+                  </div>
+                  <div className="min-w-0" role="cell">
+                    <p className="break-words text-sm font-semibold text-evergreen">
+                      {order.customer.name}
+                    </p>
+                    <p className="mt-1 break-all text-xs text-text-muted">
+                      {order.customer.email}
+                    </p>
+                  </div>
+                  <p className="text-sm text-text-muted" role="cell">
+                    <span className="mr-2 text-xs lg:hidden">Placed</span>
+                    {formatDateTime(order.created_at)}
+                  </p>
+                  <div role="cell">
+                    <OrderStatusBadge status={order.status} />
+                  </div>
+                  <p className="text-sm font-bold text-evergreen" role="cell">
+                    {formatCurrency(order.total_amount)}
+                  </p>
+                  <div role="cell">
+                    <Link className="text-link" to={`/admin/orders/${order.id}`}>
+                      Review
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       {pagination && (
         <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-xs text-ink/50">
+          <p className="text-xs text-text-muted">
             Page {pagination.page} of {pagination.totalPages} · {pagination.total}{' '}
             orders
           </p>

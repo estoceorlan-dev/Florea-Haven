@@ -1,118 +1,119 @@
 # Floréa Haven
 
-Floréa Haven is a full-stack storefront for seeds, flowers, and botanical perfumes. The current implementation covers the project foundation, public catalog, authentication, persistent shopping cart, checkout, customer orders, and administrator catalog management described in Phases 1–6 of the implementation plan.
+Floréa Haven is a storefront for seeds, flowers, and botanical perfumes. **React + Tailwind provide the interface; Python Flask provides the entire backend; PostgreSQL stores the data.**
+
+Implemented features include the public catalog, cookie authentication, persistent carts, Cash on Delivery checkout, customer order history, and administrator catalog, inventory, and order management.
 
 ## Requirements
 
-- Node.js 22 or newer
-- npm 10 or newer
-- PostgreSQL 16+ for persistent local data (optional during initial UI development)
+- Python 3.12 or newer (verified locally with Python 3.14)
+- Node.js 22+ and npm 10+ for frontend development/build tooling
+- PostgreSQL 16+ (Docker Compose configuration included)
 
-## Quick Start
+## Local setup
 
 ```bash
 npm install
+npm run backend:setup
+```
+
+Copy `.env.example` to `.env` only if you do not already have a configured `.env`. Set a stable, random `JWT_SECRET`; generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+
+For a new Docker database, start Docker Desktop and run:
+
+```bash
+npm run db:setup
 npm run dev
 ```
 
-The storefront opens at `http://localhost:5173` and the API runs at `http://localhost:4000`. When `DATABASE_URL` is not configured, the API uses an in-memory PostgreSQL-compatible development database and loads the catalog seed automatically. Data and development sessions reset when the server restarts.
+The storefront is at `http://localhost:5173`; Flask is at `http://localhost:4000`. Vite forwards `/api` to Flask. PostgreSQL is published on port **5433** to coexist with a native PostgreSQL installation on port 5432.
 
-## Persistent PostgreSQL Setup
+For an existing database, configure `DATABASE_URL` and run `npm run db:migrate` before `npm run dev`. Seeding refreshes sample catalog records, so use `npm run db:seed` only when you want that sample data refreshed.
 
-On Windows, Docker Desktop uses WSL 2. If WSL is not installed, open PowerShell as Administrator, run `wsl --install`, restart Windows, then start Docker Desktop and accept its agreement once.
+PostgreSQL is required. The old JavaScript in-memory database and `USE_IN_MEMORY_DB` setting are no longer used. `npm run dev` starts Flask and React; it does not start the database.
 
-1. Copy `.env.example` to `.env`.
-2. Run `npm run db:setup` to start PostgreSQL, wait for it to become healthy, apply migrations, and load the sample catalog.
-3. Run `npm run dev`.
+The setup command creates `backend/.venv` without requiring shell activation. Set `PYTHON` to a Python executable if the default `python` (Windows) or `python3` (other platforms) is not the intended installation. Runtime dependencies are in `backend/requirements.txt`; the tested dependency versions are pinned in `backend/constraints.txt`.
 
-The Docker database is published on `localhost:5433` by default so it can coexist with a native PostgreSQL installation on the standard port `5432`. To use a different host port, update both `POSTGRES_HOST_PORT` and the port in `DATABASE_URL` in your uncommitted `.env` file.
+## Initial administrator
 
-Open `http://localhost:5173` for the storefront preview. The Vite development server proxies `/api` requests to the API at `http://localhost:4000`.
-
-Do not commit `.env` or production credentials.
-
-Set a long, random `JWT_SECRET` in every persistent or hosted environment. Authentication uses a signed JWT stored in an HTTP-only, same-site cookie. The API remains responsible for checking the current database user and role on protected requests.
-
-## Initial Administrator
-
-Run migrations first, then set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in your uncommitted `.env` file and run:
+Set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in your uncommitted `.env`, then run:
 
 ```bash
 npm run admin:create
 ```
 
-The command safely creates an administrator or promotes and refreshes the credentials of the account with that email. It requires a persistent `DATABASE_URL`; it will not create a temporary in-memory administrator.
+This creates the administrator or updates the name, password, and role of the account with that email. It does not print credentials. Run migrations first.
 
 ## Commands
 
-| Command                | Purpose                                    |
-| ---------------------- | ------------------------------------------ |
-| `npm run dev`          | Run the client and API together            |
-| `npm run build`        | Create the production client build         |
-| `npm test`             | Run client and API tests                   |
-| `npm run lint`         | Lint both workspaces                       |
-| `npm run db:up`        | Start and health-check Docker PostgreSQL   |
-| `npm run db:down`      | Stop Docker PostgreSQL                     |
-| `npm run db:setup`     | Start, migrate, and seed Docker PostgreSQL |
-| `npm run db:migrate`   | Apply pending PostgreSQL migrations        |
-| `npm run db:seed`      | Add or refresh sample catalog data         |
-| `npm run admin:create` | Create or update the initial administrator |
+| Command                  | Purpose                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `npm run backend:setup`  | Create the Python environment and install dependencies   |
+| `npm run dev`            | Run React and Flask together                             |
+| `npm run dev:backend`    | Run Flask with development reload                        |
+| `npm run build`          | Build the React app into `client/dist`                   |
+| `npm start`              | Serve Flask and the built React app with Waitress        |
+| `npm test`               | Run PostgreSQL backend tests and existing frontend tests |
+| `npm run test:backend`   | Run Python tests                                         |
+| `npm run lint`           | Check Python formatting/lint and frontend lint           |
+| `npm run format:backend` | Format Python source with Ruff                           |
+| `npm run db:up`          | Start Docker PostgreSQL and wait for health              |
+| `npm run db:down`        | Stop Docker PostgreSQL without deleting its volume       |
+| `npm run db:setup`       | Start PostgreSQL, migrate, and seed the sample catalog   |
+| `npm run db:migrate`     | Apply pending SQL migrations with Python                 |
+| `npm run db:seed`        | Refresh sample catalog records                           |
+| `npm run admin:create`   | Create or update the initial administrator               |
 
-## Implemented API
+## Testing
 
-```text
-GET /api/health
-GET /api/categories
-GET /api/products
-GET /api/products/:id
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/logout
-GET /api/auth/me
-GET /api/cart
-POST /api/cart/items
-PUT /api/cart/items/:id
-DELETE /api/cart/items/:id
-POST /api/orders
-GET /api/orders
-GET /api/orders/:id
-GET /api/admin/categories
-GET /api/admin/products
-POST /api/categories
-PUT /api/categories/:id
-DELETE /api/categories/:id
-POST /api/products
-PUT /api/products/:id
-DELETE /api/products/:id
+Tests use `TEST_DATABASE_URL`, falling back to `DATABASE_URL`. The database user needs permission to create schemas. Each test creates a random `florea_test_...` schema, applies migrations and seeds there, and removes only that schema afterward. Existing application tables are never truncated.
+
+```powershell
+# Optional: use a separate database for tests.
+$env:TEST_DATABASE_URL = 'postgresql://florea:florea@localhost:5433/florea_haven'
+npm test
+npm run lint
+npm run build
 ```
 
-Product-list query parameters include `search`, `category`, `minPrice`, `maxPrice`, `sort`, `page`, and `limit`.
+Tests cover sessions, permissions, catalog administration, cart ownership, checkout, immutable order snapshots, status transitions, concurrent purchases, duplicate submissions, cancellation, and transaction rollback. Compatibility fixtures verify password hashes, JWTs, cart revisions, and order fingerprints generated by the original Express backend.
 
-Checkout uses Cash on Delivery. `POST /api/orders` requires a UUID `Idempotency-Key` header and the current server-provided cart revision; see the [MVP API contract](./docs/api-contract.md) for the complete request and validation rules.
+## Production serving
 
-## Project Structure
+Build the frontend, install Python dependencies, apply migrations, and run Waitress. The production process does not need Node.js; npm is an optional command wrapper.
 
-```text
-client/              React and Tailwind CSS storefront
-server/              Express REST API
-  migrations/        Ordered PostgreSQL schema changes
-  seeds/             Repeatable development catalog data
-architecture.md      System architecture
-implementation-plan.md
+```bash
+npm run build
+python -m pip install -r backend/requirements.txt
+python backend/manage.py migrate
+python backend/manage.py serve
 ```
 
-## Project Decisions and Contracts
+Set `APP_ENV=production`, `DATABASE_URL`, a stable `JWT_SECRET`, and `CLIENT_ORIGIN` to the public HTTPS origin. `PORT` defaults to 4000. Place the service behind a TLS-terminating host or reverse proxy. Flask serves the built assets and React deep links; `/api` remains on the same origin. Waitress is the production server; Flask's development server is for local work.
 
-- [MVP and technical baseline](./docs/decisions/0001-mvp-technical-baseline.md)
-- [MVP API contract](./docs/api-contract.md)
-- [Feature definition of done](./docs/definition-of-done.md)
+Set `DATABASE_SSL=true` when the database requires TLS. This uses certificate and hostname verification; configure `PGSSLROOTCERT` if the provider requires a custom CA. A PostgreSQL connection URL can also specify its own SSL settings.
 
-The baseline fixes the MVP to Cash on Delivery, signed-in persistent carts, three launch categories, PHP pricing, URL-based product images, HTTP-only cookie sessions, and a one-way order-status workflow.
+The default authentication rate limiter uses process memory. Use one Waitress process initially. Before scaling to multiple processes/instances, configure `RATELIMIT_STORAGE_URI` to shared storage and install its corresponding storage dependency. If configuring forwarded client IPs, trust only the actual reverse proxy.
 
-## Current Scope
+## Migration from Express
 
-Administrators can manage categories, products, visibility, featured placement,
-prices, images, inventory, and customer order fulfillment from the role-protected
-`/admin` workspace. Order operations include customer/date/status filtering,
-fulfillment details, validated status progression, and transactional inventory
-restoration on cancellation.
+The five existing SQL migrations and seed file are preserved under `backend/`. Migration names and the database ledger are unchanged: existing accounts, products, carts, and orders do not require conversion. Preserve your `DATABASE_URL` and `JWT_SECRET` to retain data and existing sessions.
+
+The `florea_session` cookie, bcrypt hashes, HS256 JWTs, API routes, JSON envelopes, and client API calls remain compatible. The retired Express implementation is available in Git history. Your React components, styling, themes, and UI/UX work remain in place.
+
+## Project structure
+
+```text
+client/                 React, Tailwind, React Query, and frontend tests
+backend/
+  florea/               Flask factory, auth, catalog, cart, orders, validation, database
+  migrations/           Existing ordered PostgreSQL schema changes
+  seeds/                Repeatable development catalog data
+  tests/                pytest integration, concurrency, and compatibility tests
+  manage.py             Development/production serving and database commands
+scripts/backend.mjs     Cross-platform npm launcher for the Python environment
+```
+
+See the [API contract](docs/api-contract.md), [Python backend decision](docs/decisions/0002-python-flask-backend.md), [architecture](architecture.md), and [implementation plan](implementation-plan.md).
+
+Never commit `.env` or production credentials. Image uploads and remaining UI/UX visual QA are tracked separately in the existing plans.

@@ -2,34 +2,26 @@ import { ArrowRight, PackageOpen } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { OrderStatusBadge } from '../components/OrderStatusBadge.jsx';
-import { useAsync } from '../hooks/useAsync.js';
-import { orderApi } from '../services/api.js';
+import { EmptyState } from '../components/ui/PageState.jsx';
+import { OrderListSkeleton } from '../components/ui/Skeleton.jsx';
+import { useAuth } from '../hooks/useAuth.js';
+import { useOrdersQuery } from '../queries/useOrdersQuery.js';
 import { formatCurrency, formatDateTime } from '../utils/currency.js';
 
 const orderNumber = (id) => id.slice(0, 8).toUpperCase();
 
 export function OrdersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
-  const orders = useAsync(() => orderApi.getOrders({ page, limit: 10 }), [page]);
+  const orders = useOrdersQuery(user?.id, { page, limit: 10 });
 
-  if (orders.isLoading) {
-    return (
-      <div className="page-shell py-20" aria-busy="true">
-        <div className="h-14 w-64 animate-pulse bg-evergreen/10" />
-        <div className="mt-10 space-y-4">
-          {[0, 1, 2].map((item) => (
-            <div className="h-36 animate-pulse bg-evergreen/10" key={item} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (orders.isPending) return <OrderListSkeleton />;
 
   if (orders.error) {
     return (
       <div className="page-shell py-20">
-        <InlineError error={orders.error} onRetry={orders.retry} />
+        <InlineError error={orders.error} onRetry={orders.refetch} />
       </div>
     );
   }
@@ -38,37 +30,35 @@ export function OrdersPage() {
 
   return (
     <section className="page-shell py-14 sm:py-20">
-      <div className="border-b border-evergreen/10 pb-8">
+      <div className="border-b border-border pb-8">
         <p className="eyebrow text-clay">Your account</p>
         <h1 className="mt-3 font-display text-5xl tracking-[-0.055em] text-evergreen sm:text-6xl">
           Order history
         </h1>
-        <p className="mt-4 text-sm text-ink/55">
+        <p className="mt-4 text-sm text-text-muted">
           Follow every order from the Haven, from pending to delivered.
         </p>
       </div>
 
       {data.length === 0 ? (
-        <div className="py-20 text-center">
-          <span className="mx-auto grid size-16 place-items-center rounded-full bg-sage text-evergreen">
-            <PackageOpen size={24} strokeWidth={1.5} aria-hidden="true" />
-          </span>
-          <h2 className="mt-6 font-display text-4xl text-evergreen">
-            No orders just yet.
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-ink/55">
-            When you place an order, its details and progress will live here.
-          </p>
-          <Link className="button-primary mt-7" to="/products">
-            Explore the collection
-          </Link>
-        </div>
+        <EmptyState
+          className="mt-8"
+          icon={PackageOpen}
+          eyebrow="Your order history"
+          title="No orders just yet."
+          description="When you place an order, its details and progress will live here."
+          action={
+            <Link className="button-primary" to="/products">
+              Explore the collection
+            </Link>
+          }
+        />
       ) : (
         <>
           <div className="mt-8 space-y-4">
             {data.map((order) => (
               <article
-                className="grid gap-5 border border-evergreen/10 bg-surface p-6 sm:grid-cols-[1fr_auto] sm:items-center"
+                className="grid gap-5 rounded-card border border-border bg-surface p-5 shadow-low transition hover:border-border-strong sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
                 key={order.id}
               >
                 <div>
@@ -78,7 +68,7 @@ export function OrdersPage() {
                     </h2>
                     <OrderStatusBadge status={order.status} />
                   </div>
-                  <p className="mt-2 text-sm text-ink/50">
+                  <p className="mt-2 text-sm text-text-muted">
                     {formatDateTime(order.created_at)} · {order.item_count}{' '}
                     {order.item_count === 1 ? 'item' : 'items'} ·{' '}
                     {formatCurrency(order.total_amount)}
@@ -92,6 +82,11 @@ export function OrdersPage() {
             ))}
           </div>
 
+          {orders.isPlaceholderData && (
+            <p className="mt-5 text-center text-xs text-text-muted" role="status">
+              Updating order history…
+            </p>
+          )}
           {pagination.totalPages > 1 && (
             <nav
               className="mt-10 flex items-center justify-center gap-3"
@@ -100,18 +95,18 @@ export function OrdersPage() {
               <button
                 className="pagination-button"
                 type="button"
-                disabled={!pagination.hasPreviousPage}
+                disabled={!pagination.hasPreviousPage || orders.isPlaceholderData}
                 onClick={() => setSearchParams({ page: String(page - 1) })}
               >
                 Previous
               </button>
-              <span className="text-sm text-ink/50">
+              <span className="text-sm text-text-muted" aria-current="page">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
                 className="pagination-button"
                 type="button"
-                disabled={!pagination.hasNextPage}
+                disabled={!pagination.hasNextPage || orders.isPlaceholderData}
                 onClick={() => setSearchParams({ page: String(page + 1) })}
               >
                 Next

@@ -4,22 +4,27 @@
   "private": true,
   "packageManager": "npm@10.9.3",
   "workspaces": [
-    "client",
-    "server"
+    "client"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --names client,server --prefix-colors magenta,green \"npm run dev --workspace client\" \"npm run dev --workspace server\"",
+    "dev": "concurrently --kill-others --names client,api --prefix-colors magenta,green \"npm run dev --workspace client\" \"npm run dev:backend\"",
+    "backend:setup": "node scripts/backend.mjs setup",
+    "dev:backend": "node scripts/backend.mjs dev",
+    "start": "node scripts/backend.mjs serve",
     "build": "npm run build --workspace client",
-    "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test:backend && npm run test --workspace client",
+    "test:backend": "node scripts/backend.mjs test",
+    "lint": "npm run lint:backend && npm run lint --workspace client",
+    "lint:backend": "node scripts/backend.mjs lint",
+    "format:backend": "node scripts/backend.mjs format",
     "format": "prettier --write \"**/*.{js,jsx,json,md,yml,yaml,css}\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{js,jsx,json,md,yml,yaml,css}\" --ignore-path .prettierignore",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
     "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed",
-    "db:migrate": "npm run db:migrate --workspace server",
-    "db:seed": "npm run db:seed --workspace server",
-    "admin:create": "npm run admin:create --workspace server"
+    "db:migrate": "node scripts/backend.mjs migrate",
+    "db:seed": "node scripts/backend.mjs seed",
+    "admin:create": "node scripts/backend.mjs create-admin"
   },
   "engines": {
     "node": ">=22",

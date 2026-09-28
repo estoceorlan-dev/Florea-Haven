@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { ProductImage } from '../components/ProductImage.jsx';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx';
+import { EmptyState, FeedbackBanner } from '../components/ui/PageState.jsx';
+import { AdminListSkeleton } from '../components/ui/Skeleton.jsx';
 import { adminCatalogApi } from '../services/api.js';
 import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 import { formatCurrency } from '../utils/currency.js';
@@ -97,7 +100,7 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
 
   return (
     <form
-      className="border border-evergreen/10 bg-surface p-6 sm:p-7"
+      className="rounded-card border border-border bg-surface p-6 shadow-low sm:p-7"
       onSubmit={submit}
     >
       <div className="flex items-start justify-between gap-4">
@@ -274,7 +277,13 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
         ) : (
           <PackagePlus size={15} aria-hidden="true" />
         )}
-        {product ? 'Save product' : 'Create product'}
+        {isSaving
+          ? product
+            ? 'Saving product…'
+            : 'Creating product…'
+          : product
+            ? 'Save product'
+            : 'Create product'}
       </button>
     </form>
   );
@@ -297,6 +306,8 @@ export function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState('');
+  const [pendingDeactivate, setPendingDeactivate] = useState(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
@@ -367,21 +378,21 @@ export function AdminProductsPage() {
     }
   };
 
-  const deactivate = async (product) => {
-    const confirmed = window.confirm(
-      `Deactivate “${product.name}”? It will disappear from the customer catalog but remain in order history.`,
-    );
-    if (!confirmed) return;
-
+  const deactivate = async () => {
+    if (!pendingDeactivate) return;
     setNotice('');
+    setIsDeactivating(true);
     try {
-      await adminCatalogApi.deactivateProduct(product.id);
+      await adminCatalogApi.deactivateProduct(pendingDeactivate.id);
       void invalidateCatalog();
-      if (editing?.id === product.id) setEditing(null);
-      setNotice(`${product.name} was deactivated.`);
+      if (editing?.id === pendingDeactivate.id) setEditing(null);
+      setNotice(`${pendingDeactivate.name} was deactivated.`);
+      setPendingDeactivate(null);
       await loadProducts();
     } catch (deactivateError) {
       setError(deactivateError);
+    } finally {
+      setIsDeactivating(false);
     }
   };
 
@@ -399,13 +410,13 @@ export function AdminProductsPage() {
 
   return (
     <section>
-      <div className="flex flex-wrap items-end justify-between gap-5 border-b border-evergreen/10 pb-7">
+      <div className="flex flex-wrap items-end justify-between gap-5 border-b border-border pb-7">
         <div>
           <p className="eyebrow text-clay">Catalog operations</p>
           <h1 className="mt-2 font-display text-5xl tracking-[-0.045em] text-evergreen">
             Products & inventory
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/55">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
             Maintain customer listings, current prices, imagery, featured items, and
             available stock.
           </p>
@@ -421,33 +432,20 @@ export function AdminProductsPage() {
       </div>
 
       {notice && (
-        <p
-          className="mt-6 border border-evergreen/15 bg-surface px-4 py-3 text-sm text-evergreen"
-          role="status"
-        >
+        <FeedbackBanner className="mt-6" onDismiss={() => setNotice('')}>
           {notice}
-        </p>
+        </FeedbackBanner>
       )}
       {error && (
-        <div
-          className="form-alert mt-6 flex items-start justify-between gap-4"
-          role="alert"
-        >
-          <span>{error.message}</span>
-          <button
-            type="button"
-            className="text-link shrink-0"
-            onClick={() => setError(null)}
-          >
-            Dismiss
-          </button>
-        </div>
+        <FeedbackBanner className="mt-6" tone="error" onDismiss={() => setError(null)}>
+          {error.message}
+        </FeedbackBanner>
       )}
 
       <div className="mt-7 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_27rem]">
         <div className="min-w-0">
           <form
-            className="grid gap-3 border border-evergreen/10 bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(8rem,auto))]"
+            className="grid gap-3 rounded-card border border-border bg-surface p-4 shadow-low sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_repeat(3,minmax(8rem,auto))]"
             aria-label="Filter products"
             onSubmit={(event) => {
               event.preventDefault();
@@ -518,124 +516,109 @@ export function AdminProductsPage() {
             </button>
           </form>
 
-          <div className="mt-5 overflow-hidden border border-evergreen/10 bg-surface">
+          <div className="mt-5 overflow-hidden rounded-card border border-border bg-surface shadow-low">
             {isLoading ? (
-              <div className="grid min-h-72 place-items-center" role="status">
-                <LoaderCircle className="animate-spin text-leaf" aria-hidden="true" />
-                <span className="sr-only">Loading products</span>
-              </div>
+              <AdminListSkeleton label="Loading products" />
             ) : products.length === 0 ? (
-              <p className="p-10 text-center text-sm text-ink/55">
-                No products match these filters.
-              </p>
+              <EmptyState
+                className="m-4"
+                icon={PackagePlus}
+                eyebrow="Catalog inventory"
+                title="No matching products."
+                description="Try changing the filters or create a new product for the catalog."
+              />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] border-collapse text-left">
-                  <thead className="bg-sage/45 text-[0.64rem] font-extrabold uppercase tracking-[0.12em] text-evergreen">
-                    <tr>
-                      <th className="px-4 py-3" scope="col">
-                        Product
-                      </th>
-                      <th className="px-4 py-3" scope="col">
-                        Price
-                      </th>
-                      <th className="px-4 py-3" scope="col">
-                        Stock
-                      </th>
-                      <th className="px-4 py-3" scope="col">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-right" scope="col">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-evergreen/10">
-                    {products.map((product) => (
-                      <tr
-                        key={product.id}
-                        className={product.is_active ? '' : 'bg-mist/45'}
-                      >
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <ProductImage
-                              className="size-12 shrink-0 object-cover"
-                              src={product.image_url}
-                              alt=""
-                            />
-                            <div>
-                              <p className="text-sm font-bold text-evergreen">
-                                {product.name}
-                              </p>
-                              <p className="mt-1 text-[0.68rem] text-ink/45">
-                                {product.sku} · {product.category.name}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-sm font-semibold text-ink/70">
-                          {formatCurrency(product.price)}
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`text-sm font-bold ${product.stock_quantity === 0 ? 'text-clay' : 'text-evergreen'}`}
+              <div role="table" aria-label="Products and inventory">
+                <div
+                  className="hidden grid-cols-[minmax(14rem,1.5fr)_minmax(6rem,.65fr)_5rem_7rem_6rem] gap-4 bg-surface-muted px-5 py-3 text-[0.64rem] font-extrabold uppercase tracking-[0.12em] text-evergreen md:grid"
+                  role="row"
+                >
+                  {['Product', 'Price', 'Stock', 'Status', 'Actions'].map((label) => (
+                    <span key={label} role="columnheader">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <div className="divide-y divide-border">
+                  {products.map((product) => (
+                    <article
+                      key={product.id}
+                      className={`grid gap-4 p-5 md:grid-cols-[minmax(14rem,1.5fr)_minmax(6rem,.65fr)_5rem_7rem_6rem] md:items-center ${product.is_active ? '' : 'bg-surface-muted'}`}
+                      role="row"
+                    >
+                      <div className="flex min-w-0 items-center gap-3" role="cell">
+                        <ProductImage
+                          className="size-14 shrink-0 rounded-control object-cover"
+                          src={product.image_url}
+                          alt=""
+                        />
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-bold text-evergreen">
+                            {product.name}
+                          </p>
+                          <p className="mt-1 break-words text-[0.68rem] text-text-muted">
+                            {product.sku} · {product.category.name}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-text" role="cell">
+                        <span className="mr-2 text-xs text-text-muted md:hidden">
+                          Price
+                        </span>
+                        {formatCurrency(product.price)}
+                      </p>
+                      <p className="text-sm font-bold text-evergreen" role="cell">
+                        <span className="mr-2 text-xs font-normal text-text-muted md:hidden">
+                          Stock
+                        </span>
+                        {product.stock_quantity}
+                      </p>
+                      <div role="cell">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-[0.08em] ${product.is_active ? 'bg-brand-soft text-success' : 'bg-surface text-danger'}`}
+                        >
+                          {product.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 md:justify-end" role="cell">
+                        <button
+                          className="icon-button border border-border"
+                          type="button"
+                          aria-label={`Edit ${product.name}`}
+                          onClick={() => setEditing(product)}
+                        >
+                          <Pencil size={15} aria-hidden="true" />
+                        </button>
+                        {product.is_active ? (
+                          <button
+                            className="icon-button border border-border text-danger"
+                            type="button"
+                            aria-label={`Deactivate ${product.name}`}
+                            onClick={() => setPendingDeactivate(product)}
                           >
-                            {product.stock_quantity}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-[0.08em] ${
-                              product.is_active
-                                ? 'bg-sage text-evergreen'
-                                : 'bg-blush text-clay'
-                            }`}
+                            <Archive size={15} aria-hidden="true" />
+                          </button>
+                        ) : (
+                          <button
+                            className="icon-button border border-border"
+                            type="button"
+                            aria-label={`Restore ${product.name}`}
+                            onClick={() => restore(product)}
                           >
-                            {product.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              className="icon-button border border-evergreen/10"
-                              type="button"
-                              aria-label={`Edit ${product.name}`}
-                              onClick={() => setEditing(product)}
-                            >
-                              <Pencil size={15} aria-hidden="true" />
-                            </button>
-                            {product.is_active ? (
-                              <button
-                                className="icon-button border border-clay/15 text-clay"
-                                type="button"
-                                aria-label={`Deactivate ${product.name}`}
-                                onClick={() => deactivate(product)}
-                              >
-                                <Archive size={15} aria-hidden="true" />
-                              </button>
-                            ) : (
-                              <button
-                                className="icon-button border border-evergreen/10"
-                                type="button"
-                                aria-label={`Restore ${product.name}`}
-                                onClick={() => restore(product)}
-                              >
-                                <RotateCcw size={15} aria-hidden="true" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            <RotateCcw size={15} aria-hidden="true" />
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {pagination && (
             <div className="mt-4 flex items-center justify-between gap-4">
-              <p className="text-xs text-ink/50">
+              <p className="text-xs text-text-muted">
                 Page {pagination.page} of {pagination.totalPages} · {pagination.total}{' '}
                 products
               </p>
@@ -677,12 +660,21 @@ export function AdminProductsPage() {
               onSubmit={saveProduct}
             />
           ) : (
-            <div className="border border-evergreen/10 bg-surface p-7 text-sm leading-6 text-ink/55">
+            <div className="rounded-card border border-border bg-surface p-7 text-sm leading-6 text-text-muted shadow-low">
               Create a category before adding products.
             </div>
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDeactivate)}
+        title={pendingDeactivate ? `Deactivate “${pendingDeactivate.name}”?` : ''}
+        description="The product will disappear from the customer catalog while remaining in historical orders. You can restore it later."
+        confirmLabel="Deactivate product"
+        isConfirming={isDeactivating}
+        onClose={() => setPendingDeactivate(null)}
+        onConfirm={deactivate}
+      />
     </section>
   );
 }

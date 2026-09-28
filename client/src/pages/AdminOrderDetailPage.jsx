@@ -4,6 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { OrderDetails } from '../components/OrderDetails.jsx';
 import { OrderStatusBadge } from '../components/OrderStatusBadge.jsx';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx';
+import { FeedbackBanner } from '../components/ui/PageState.jsx';
+import { AdminDetailSkeleton } from '../components/ui/Skeleton.jsx';
 import { adminOrderApi } from '../services/api.js';
 import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
 import {
@@ -20,6 +23,7 @@ export function AdminOrderDetailPage() {
   const [updatingStatus, setUpdatingStatus] = useState('');
   const [notice, setNotice] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [pendingStatus, setPendingStatus] = useState('');
 
   useEffect(() => {
     let isCurrent = true;
@@ -45,13 +49,6 @@ export function AdminOrderDetailPage() {
   }, [orderId, reloadKey]);
 
   const updateStatus = async (status) => {
-    if (
-      status === 'cancelled' &&
-      !window.confirm('Cancel this order and return every item to inventory?')
-    ) {
-      return;
-    }
-
     setUpdatingStatus(status);
     setNotice('');
 
@@ -61,6 +58,7 @@ export function AdminOrderDetailPage() {
       setOrder(payload.data);
       setError(null);
       setNotice(`Order status updated to ${payload.data.status}.`);
+      setPendingStatus('');
     } catch (updateError) {
       setError(updateError);
     } finally {
@@ -69,12 +67,7 @@ export function AdminOrderDetailPage() {
   };
 
   if (loadedOrderId !== orderId) {
-    return (
-      <div className="grid min-h-96 place-items-center" role="status">
-        <LoaderCircle className="animate-spin text-leaf" aria-hidden="true" />
-        <span className="sr-only">Loading order details</span>
-      </div>
-    );
+    return <AdminDetailSkeleton />;
   }
 
   if (!order && error) {
@@ -98,7 +91,7 @@ export function AdminOrderDetailPage() {
         All orders
       </Link>
 
-      <div className="grid gap-5 border-b border-evergreen/10 pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="grid gap-5 border-b border-border pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <p className="eyebrow text-clay">Fulfillment detail</p>
           <h1 className="mt-2 break-all font-display text-4xl tracking-[-0.04em] text-evergreen sm:text-5xl">
@@ -109,31 +102,18 @@ export function AdminOrderDetailPage() {
       </div>
 
       {notice && (
-        <p
-          className="mt-6 border border-evergreen/15 bg-surface px-4 py-3 text-sm text-evergreen"
-          role="status"
-        >
+        <FeedbackBanner className="mt-6" onDismiss={() => setNotice('')}>
           {notice}
-        </p>
+        </FeedbackBanner>
       )}
       {error && (
-        <div
-          className="form-alert mt-6 flex items-start justify-between gap-4"
-          role="alert"
-        >
-          <span>{error.message}</span>
-          <button
-            className="text-link shrink-0"
-            type="button"
-            onClick={() => setError(null)}
-          >
-            Dismiss
-          </button>
-        </div>
+        <FeedbackBanner className="mt-6" tone="error" onDismiss={() => setError(null)}>
+          {error.message}
+        </FeedbackBanner>
       )}
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <div className="border border-evergreen/10 bg-surface p-6">
+        <div className="rounded-card border border-border bg-surface p-6 shadow-low">
           <div className="flex gap-3">
             <UserRound className="mt-0.5 shrink-0 text-leaf" size={19} />
             <div>
@@ -142,7 +122,7 @@ export function AdminOrderDetailPage() {
                 {order.customer.name}
               </h2>
               <a
-                className="mt-2 flex items-center gap-2 text-sm text-ink/60 hover:text-evergreen"
+                className="mt-2 flex items-center gap-2 break-all text-sm text-text-muted hover:text-evergreen"
                 href={`mailto:${order.customer.email}`}
               >
                 <Mail size={15} aria-hidden="true" />
@@ -152,7 +132,7 @@ export function AdminOrderDetailPage() {
           </div>
         </div>
 
-        <div className="border border-evergreen/10 bg-surface p-6">
+        <div className="rounded-card border border-border bg-surface p-6 shadow-low">
           <p className="eyebrow text-clay">Status actions</p>
           {nextStatuses.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-3">
@@ -164,7 +144,11 @@ export function AdminOrderDetailPage() {
                   type="button"
                   key={status}
                   disabled={Boolean(updatingStatus)}
-                  onClick={() => updateStatus(status)}
+                  onClick={() =>
+                    status === 'cancelled'
+                      ? setPendingStatus(status)
+                      : updateStatus(status)
+                  }
                 >
                   {updatingStatus === status && (
                     <LoaderCircle
@@ -178,7 +162,7 @@ export function AdminOrderDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm leading-6 text-ink/55">
+            <p className="mt-3 text-sm leading-6 text-text-muted">
               This order is complete and has no further status actions.
             </p>
           )}
@@ -188,6 +172,15 @@ export function AdminOrderDetailPage() {
       <div className="mt-10">
         <OrderDetails order={order} />
       </div>
+      <ConfirmDialog
+        open={pendingStatus === 'cancelled'}
+        title="Cancel this order?"
+        description="Every item will be returned to inventory. The cancelled order will remain in the customer’s history."
+        confirmLabel="Cancel order"
+        isConfirming={updatingStatus === 'cancelled'}
+        onClose={() => setPendingStatus('')}
+        onConfirm={() => updateStatus('cancelled')}
+      />
     </section>
   );
 }

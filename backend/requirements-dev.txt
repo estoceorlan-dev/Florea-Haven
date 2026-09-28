@@ -1,0 +1,4 @@
+-c constraints.txt
+-r requirements.txt
+pytest>=8.3,<10
+ruff>=0.11,<1

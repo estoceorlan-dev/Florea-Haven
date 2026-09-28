@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TestAppProviders } from '../test/TestAppProviders.jsx';
@@ -122,7 +122,8 @@ describe('admin order flows', () => {
           return jsonResponse({ data: order });
         }
         if (url === `/api/admin/orders/${order.id}/status` && method === 'PUT') {
-          return jsonResponse({ data: { ...order, status: 'confirmed' } });
+          const { status } = JSON.parse(options.body);
+          return jsonResponse({ data: { ...order, status } });
         }
 
         throw new Error(`Unexpected request: ${method} ${url}`);
@@ -160,5 +161,20 @@ describe('admin order flows', () => {
         options?.method === 'PUT',
     );
     expect(JSON.parse(updateCall[1].body)).toEqual({ status: 'confirmed' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Cancel this order?' });
+    expect(dialog).toHaveTextContent('returned to inventory');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel order' }));
+
+    expect(
+      await screen.findByText('Order status updated to cancelled.'),
+    ).toBeInTheDocument();
+    const statusCalls = fetchMock.mock.calls.filter(
+      ([url, options]) =>
+        String(url) === `/api/admin/orders/${order.id}/status` &&
+        options?.method === 'PUT',
+    );
+    expect(JSON.parse(statusCalls[1][1].body)).toEqual({ status: 'cancelled' });
   });
 });

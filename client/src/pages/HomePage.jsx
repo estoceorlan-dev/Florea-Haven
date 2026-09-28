@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/ProductGridSkeleton.jsx';
-import { CategoryCardSkeleton } from '../components/ui/Skeleton.jsx';
+import { CategoryGridSkeleton } from '../components/ui/Skeleton.jsx';
 import { useCategoriesQuery } from '../queries/useCategoriesQuery.js';
 import { useProductsQuery } from '../queries/useProductsQuery.js';
 
@@ -80,25 +80,13 @@ export function HomePage() {
             <p className="eyebrow text-clay">Find your kind of beautiful</p>
             <h2 className="section-title mt-3">Three ways to grow</h2>
           </div>
-          <p className="max-w-sm text-sm leading-6 text-ink/60">
+          <p className="max-w-sm text-sm leading-6 text-text-muted">
             From the first seed to the final note of fragrance, each piece is selected
             to feel personal and quietly special.
           </p>
         </div>
 
-        {categories.isPending && (
-          <div
-            className="grid gap-5 md:grid-cols-3"
-            role="status"
-            aria-label="Loading collections"
-            aria-busy="true"
-          >
-            <span className="sr-only">Loading collections</span>
-            {Array.from({ length: 3 }, (_, index) => (
-              <CategoryCardSkeleton key={index} />
-            ))}
-          </div>
-        )}
+        {categories.isPending && <CategoryGridSkeleton />}
 
         {categories.error && (
           <InlineError error={categories.error} onRetry={categories.refetch} />
@@ -190,7 +178,7 @@ export function HomePage() {
       </section>
 
       <section className="page-shell py-20 md:py-28">
-        <div className="grid overflow-hidden bg-mist md:grid-cols-2">
+        <div className="grid overflow-hidden rounded-card border border-border bg-surface-muted shadow-low md:grid-cols-2">
           <div className="relative min-h-[360px]">
             <img
               className="absolute inset-0 size-full object-cover"
@@ -205,7 +193,7 @@ export function HomePage() {
               <h2 className="mt-4 max-w-md font-display text-4xl leading-[1.02] tracking-[-0.045em] text-evergreen sm:text-5xl">
                 Chosen for the way it makes a day feel.
               </h2>
-              <p className="mt-6 max-w-md text-sm leading-7 text-ink/65">
+              <p className="mt-6 max-w-md text-sm leading-7 text-text-muted">
                 We look for lasting flowers, generous seeds, and fragrances that unfold
                 gently. Everything in the Haven earns its place through beauty,
                 character, and care.

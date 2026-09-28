@@ -29,4 +29,18 @@ export const queryKeys = {
   products: ['catalog', 'products'],
   productList: (params) => ['catalog', 'products', normalizeProductFilters(params)],
   product: (id) => ['catalog', 'product', id],
+  user: (userId) => ['user', userId],
+  cart: (userId) => ['user', userId, 'cart'],
+  orders: (userId) => ['user', userId, 'orders'],
+  orderList: (userId, params) => [
+    'user',
+    userId,
+    'orders',
+    'list',
+    {
+      page: Math.max(1, Number(params?.page) || 1),
+      limit: Math.max(1, Number(params?.limit) || 10),
+    },
+  ],
+  order: (userId, orderId) => ['user', userId, 'orders', 'detail', orderId],
 };

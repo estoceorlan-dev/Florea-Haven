@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AddToCartButton } from '../components/AddToCartButton.jsx';
@@ -6,6 +7,7 @@ import { AuthContext } from '../context/AuthContext.js';
 import { CartProvider } from '../context/CartProvider.jsx';
 import { useCart } from '../hooks/useCart.js';
 import { TestAppProviders } from '../test/TestAppProviders.jsx';
+import { AppQueryProvider } from '../queries/AppQueryProvider.jsx';
 import { CartPage } from './CartPage.jsx';
 
 const customer = {
@@ -68,7 +70,19 @@ function CartProbe() {
   );
 }
 
+function CheckoutPollingProbe() {
+  const { cart: currentCart, setCheckoutRefreshEnabled } = useCart();
+
+  useEffect(() => {
+    setCheckoutRefreshEnabled(true);
+    return () => setCheckoutRefreshEnabled(false);
+  }, [setCheckoutRefreshEnabled]);
+
+  return <p>{currentCart.summary.item_count} items ready</p>;
+}
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -79,11 +93,13 @@ describe('cart flows', () => {
       .mockReturnValue(jsonResponse({ data: { cart } }));
 
     render(
-      <AuthContext.Provider value={authValue}>
-        <CartProvider>
-          <CartProbe />
-        </CartProvider>
-      </AuthContext.Provider>,
+      <AppQueryProvider>
+        <AuthContext.Provider value={authValue}>
+          <CartProvider>
+            <CartProbe />
+          </CartProvider>
+        </AuthContext.Provider>
+      </AppQueryProvider>,
     );
 
     expect(await screen.findByText('2 items')).toBeInTheDocument();
@@ -91,6 +107,33 @@ describe('cart flows', () => {
       '/api/cart',
       expect.objectContaining({ credentials: 'include' }),
     );
+  });
+
+  it('polls the cart every 10 seconds only while checkout refresh is enabled', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockReturnValue(jsonResponse({ data: { cart } }));
+
+    const view = render(
+      <AppQueryProvider>
+        <AuthContext.Provider value={authValue}>
+          <CartProvider>
+            <CheckoutPollingProbe />
+          </CartProvider>
+        </AuthContext.Provider>
+      </AppQueryProvider>,
+    );
+
+    expect(await screen.findByText('2 items ready')).toBeInTheDocument();
+    const initialRequests = fetchMock.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(initialRequests);
+
+    view.unmount();
+    const requestsAtUnmount = fetchMock.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(30_000));
+    expect(fetchMock).toHaveBeenCalledTimes(requestsAtUnmount);
   });
 
   it('renders cart totals and sends quantity and removal actions', async () => {
@@ -113,6 +156,9 @@ describe('cart flows', () => {
     );
 
     expect(screen.getAllByText('₱3,780')).toHaveLength(3);
+    expect(screen.getByText('14 available').parentElement).toHaveTextContent(
+      '14 available·2 in your cart',
+    );
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Increase Blush Garden Bouquet quantity',
@@ -122,6 +168,41 @@ describe('cart flows', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(removeItem).toHaveBeenCalledWith(cart.items[0].id));
+  });
+
+  it('offers a one-step recovery when the requested quantity exceeds stock', async () => {
+    const updateItem = vi.fn().mockResolvedValue(cart);
+    const insufficientCart = {
+      ...cart,
+      items: [
+        {
+          ...cart.items[0],
+          quantity: 7,
+          availability: 'insufficient_stock',
+          product: { ...product, stock_quantity: 3 },
+        },
+      ],
+      summary: { ...cart.summary, has_unavailable_items: true },
+    };
+
+    render(
+      <MemoryRouter>
+        <TestAppProviders
+          user={customer}
+          cart={insufficientCart}
+          cartActions={{ updateItem }}
+        >
+          <CartPage />
+        </TestAppProviders>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('3 available').parentElement).toHaveTextContent(
+      '3 available·7 in your cart',
+    );
+    expect(screen.getByRole('button', { name: 'Checkout unavailable' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Set quantity to 3' }));
+    await waitFor(() => expect(updateItem).toHaveBeenCalledWith(cart.items[0].id, 3));
   });
 
   it('adds a product through the reusable catalog action', async () => {

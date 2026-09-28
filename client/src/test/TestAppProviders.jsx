@@ -39,11 +39,16 @@ export function TestAppProviders({
           value={{
             cart,
             error: null,
+            refreshError: null,
             isLoading: false,
+            isRefreshing: false,
+            lastUpdated: 1,
             addItem: async () => cart,
             updateItem: async () => cart,
             removeItem: async () => cart,
             reload: async () => cart,
+            setCart: () => cart,
+            setCheckoutRefreshEnabled: () => undefined,
             ...cartActions,
           }}
         >

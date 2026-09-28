@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TestAppProviders } from '../test/TestAppProviders.jsx';
@@ -111,7 +111,8 @@ afterEach(() => {
 
 describe('checkout and customer order flows', () => {
   it('submits the server cart revision and continues to confirmation', async () => {
-    const reload = vi.fn().mockResolvedValue({ items: [], summary: {} });
+    const reload = vi.fn().mockResolvedValue(cart);
+    const setCart = vi.fn();
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockReturnValue(
@@ -120,7 +121,7 @@ describe('checkout and customer order flows', () => {
 
     render(
       <MemoryRouter initialEntries={['/checkout']}>
-        <TestAppProviders user={customer} cart={cart} cartActions={{ reload }}>
+        <TestAppProviders user={customer} cart={cart} cartActions={{ reload, setCart }}>
           <Routes>
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route
@@ -133,13 +134,18 @@ describe('checkout and customer order flows', () => {
     );
 
     expect(screen.getByLabelText('Recipient name')).toHaveValue('Mara Santos');
+    expect(screen.getByText('14 available').parentElement).toHaveTextContent(
+      '14 available·2 in your cart',
+    );
+    expect(screen.getByText(/Stock checked/)).toBeInTheDocument();
     fillAddress();
     fireEvent.click(screen.getByRole('button', { name: 'Place order' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Confirmation reached' }),
     ).toBeInTheDocument();
-    expect(reload).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(2);
+    expect(setCart).toHaveBeenCalledWith(expect.objectContaining({ items: [] }));
 
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/orders');
@@ -186,7 +192,59 @@ describe('checkout and customer order flows', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Your cart changed');
     expect(screen.getByLabelText('Address line 1')).toHaveValue('12 Sampaguita Street');
     expect(screen.getByLabelText('City')).toHaveValue('Quezon City');
-    expect(reload).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(2);
+  });
+
+  it('blocks submission when the preflight check finds less stock and focuses recovery', async () => {
+    const changedCart = {
+      ...cart,
+      revision: 'b'.repeat(64),
+      items: [
+        {
+          ...cart.items[0],
+          availability: 'insufficient_stock',
+          product: { ...product, stock_quantity: 1 },
+        },
+      ],
+      summary: { ...cart.summary, has_unavailable_items: true },
+    };
+    const reload = vi
+      .fn()
+      .mockResolvedValueOnce(cart)
+      .mockResolvedValueOnce(changedCart);
+    const setCart = vi.fn();
+    const setCheckoutRefreshEnabled = vi.fn();
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    const view = render(
+      <MemoryRouter>
+        <TestAppProviders
+          user={customer}
+          cart={cart}
+          cartActions={{ reload, setCart, setCheckoutRefreshEnabled }}
+        >
+          <CheckoutPage />
+        </TestAppProviders>
+      </MemoryRouter>,
+    );
+
+    fillAddress();
+    fireEvent.click(screen.getByRole('button', { name: 'Place order' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveFocus();
+    expect(alert).toHaveTextContent('Availability changed for the highlighted item');
+    expect(screen.getByLabelText('Address line 1')).toHaveValue('12 Sampaguita Street');
+    expect(screen.getByLabelText('City')).toHaveValue('Quezon City');
+    expect(setCart).toHaveBeenCalledWith(changedCart);
+    expect(screen.getByText(new RegExp(product.name)).closest('article')).toHaveClass(
+      'cart-line-changed',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(setCheckoutRefreshEnabled).toHaveBeenCalledWith(true);
+
+    view.unmount();
+    await waitFor(() => expect(setCheckoutRefreshEnabled).toHaveBeenCalledWith(false));
   });
 
   it('renders order history summaries returned by the API', async () => {
@@ -244,6 +302,9 @@ describe('checkout and customer order flows', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/12 Sampaguita Street/)).toBeInTheDocument();
     expect(screen.getByText('Cash on Delivery')).toBeInTheDocument();
+    expect(screen.getByText(/This purchase record keeps/)).toHaveTextContent(
+      'Current catalog availability may differ.',
+    );
   });
 
   it('shows the confirmation treatment for a completed checkout request', async () => {
