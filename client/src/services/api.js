@@ -75,19 +75,21 @@ export const catalogApi = {
 };
 
 export const adminCatalogApi = {
-  getCategories: () => request('/api/admin/categories'),
+  getCategories: (options = {}) => request('/api/admin/categories', options),
   createCategory: (input) => jsonRequest('/api/categories', 'POST', input),
   updateCategory: (id, input) => jsonRequest(`/api/categories/${id}`, 'PUT', input),
   deleteCategory: (id) => request(`/api/categories/${id}`, { method: 'DELETE' }),
-  getProducts: (params = {}) => request(`/api/admin/products${toQueryString(params)}`),
+  getProducts: (params = {}, options = {}) =>
+    request(`/api/admin/products${toQueryString(params)}`, options),
   createProduct: (input) => jsonRequest('/api/products', 'POST', input),
   updateProduct: (id, input) => jsonRequest(`/api/products/${id}`, 'PUT', input),
   deactivateProduct: (id) => request(`/api/products/${id}`, { method: 'DELETE' }),
 };
 
 export const adminOrderApi = {
-  getOrders: (params = {}) => request(`/api/admin/orders${toQueryString(params)}`),
-  getOrder: (id) => request(`/api/admin/orders/${id}`),
+  getOrders: (params = {}, options = {}) =>
+    request(`/api/admin/orders${toQueryString(params)}`, options),
+  getOrder: (id, options = {}) => request(`/api/admin/orders/${id}`, options),
   updateStatus: (id, status) =>
     jsonRequest(`/api/admin/orders/${id}/status`, 'PUT', { status }),
 };
@@ -97,6 +99,55 @@ export const authApi = {
   login: (input) => jsonRequest('/api/auth/login', 'POST', input),
   logout: () => jsonRequest('/api/auth/logout', 'POST'),
   getMe: () => request('/api/auth/me'),
+};
+
+export const imageApi = {
+  remove: (endpoint) => request(endpoint, { method: 'DELETE' }),
+  upload: (endpoint, file, onProgress) =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', `${apiBaseUrl}${endpoint}`);
+      xhr.withCredentials = true;
+      xhr.timeout = 90000;
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable)
+          onProgress(Math.round((event.loaded / event.total) * 100));
+      };
+      xhr.onload = () => {
+        let payload;
+        try {
+          payload = JSON.parse(xhr.responseText);
+        } catch {
+          reject(
+            new ApiError(
+              'We could not read the response. Please try again.',
+              xhr.status,
+            ),
+          );
+          return;
+        }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(payload);
+        else
+          reject(
+            new ApiError(
+              payload?.error?.details?.[0]?.message ??
+                payload?.error?.message ??
+                'Image upload failed. Please try again.',
+              xhr.status,
+            ),
+          );
+      };
+      xhr.onerror = () =>
+        reject(
+          new ApiError('Image upload failed. Check your connection and try again.', 0),
+        );
+      xhr.ontimeout = () =>
+        reject(new ApiError('The upload timed out. Please try again.', 0));
+      const body = new FormData();
+      body.append('file', file);
+      xhr.send(body);
+    }),
 };
 
 export const cartApi = {

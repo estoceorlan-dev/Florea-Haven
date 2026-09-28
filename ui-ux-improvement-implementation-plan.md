@@ -1,6 +1,6 @@
 # Floréa Haven UI/UX Improvement Implementation Plan
 
-**Status:** In progress — Phases 2, 3, 5, 6, and 7 implemented in code; Phase 4 catalog, cart, and customer-order foundation implemented; Figma and connected-browser visual QA remain pending
+**Status:** Code implementation and automated release checks completed; Figma comparison, full assistive-technology review, and hosted staging acceptance remain pending
 **Scope:** Customer storefront, authentication, checkout, and administrator shell
 **Primary goal:** Evolve the existing interface into a modern, responsive, polished botanical-commerce experience while preserving Floréa Haven's soft pink floral and minimalist aesthetic, without changing the server's role as the authority for identity, pricing, inventory, carts, and orders.
 
@@ -356,6 +356,10 @@ Use skeletons only for the first unresolved load. During background refetch, kee
 - Auth: keep form width/readability stable, replace the large image with an efficient responsive image treatment, and make the Home link obvious.
 - Admin: use responsive tables at desktop and labeled cards/rows on narrow screens instead of forcing horizontal scrolling for core actions.
 
+## Release implementation update — 2026-09-28
+
+Image management and account avatars are implemented. Full desktop/mobile customer and administrator browser journeys found and now cover checkout confirmation and authentication redirect races. Production CSP permits external theme initialization without inline JavaScript, and page navigation resets scroll. The administrator query migration completes Phase 4. [Release status](docs/release-status.md) records verified checks and the remaining external acceptance work; prior dated entries below are historical.
+
 ## Implementation Phases
 
 ### Phase 1 — Visual inventory and Figma specification
@@ -401,16 +405,16 @@ Implementation note (2026-09-01): the production code and automated checks are c
 ### Phase 4 — Stable fetching and caching
 
 - [x] Install and configure TanStack Query.
-- [ ] Make API GET functions signal-aware and preserve abort errors.
+- [x] Make API GET functions signal-aware and preserve abort errors.
 - [x] Add normalized query keys and catalog/cart/order hooks.
 - [x] Migrate Home, catalog, and product detail away from `useAsync`.
-- [ ] Migrate cart, checkout, customer orders, and admin queries.
-- [ ] Implement cache ownership, retry, refresh, and invalidation rules.
+- [x] Migrate cart, checkout, customer orders, and admin queries.
+- [x] Implement cache ownership, retry, refresh, and invalidation rules.
 - [x] Remove `useAsync.js` only after no imports remain.
 
 **Exit gate:** Duplicate consumers share a response, stale content remains visible during refresh, obsolete requests cancel cleanly, and mutations update/invalidate the right views.
 
-**Phase 7 foundation extension delivered:** Public catalog/category/detail queries and authenticated cart/customer-order queries now use normalized keys, cancellation, bounded retries, focus/reconnect refresh, and shared cache updates. Cart mutations write the returned server cart into the user-scoped cache and invalidate public inventory. Checkout success empties the cached cart, refreshes order lists and inventory, and seeds the new order detail. Customer cache data is removed when identity changes, and no `useAsync` imports remain. Admin query migration and its remaining ownership rules are still Phase 4 work.
+**Phase 7 foundation extension delivered:** Public catalog/category/detail queries and authenticated cart/customer-order queries now use normalized keys, cancellation, bounded retries, focus/reconnect refresh, and shared cache updates. Cart mutations write the returned server cart into the user-scoped cache and invalidate public inventory. Checkout success empties the cached cart, refreshes order lists and inventory, and seeds the new order detail. Customer cache data is removed when identity changes, and no `useAsync` imports remain. Administrator products, categories, order lists, and order details now use user-scoped query keys, abort signals, focus/reconnect refresh, visible-page polling, and mutation invalidation.
 
 ### Phase 5 — Navigation, user identity, and auth flow
 
@@ -457,18 +461,18 @@ Implementation note (2026-09-01): both responsive shells, role-based landing rul
 
 ### Phase 8 — Remaining page polish and administrator UI
 
-- [ ] Apply the design system to Home, auth, Account, order history, and error/empty states.
-- [ ] Apply the sidebar shell and responsive table/card patterns to all administrator pages.
-- [ ] Standardize saving, success, destructive confirmation, and failure feedback.
+- [x] Apply the design system to Home, auth, Account, order history, and error/empty states.
+- [x] Apply the sidebar shell and responsive table/card patterns to all administrator pages.
+- [x] Standardize saving, success, destructive confirmation, and failure feedback.
 - [ ] Remove obsolete one-off styles and duplicated loading markup.
 
 **Exit gate:** Customer and administrator pages feel like one product and use the same state language.
 
 ### Phase 9 — Verification and release
 
-- [ ] Run client unit/component tests, server tests, lint, and production build.
-- [ ] Add end-to-end coverage for the release-critical flows below.
-- [ ] Test 320, 390, 768, 1024, 1280, and 1440 px widths.
+- [x] Run client unit/component tests, server tests, lint, and production build.
+- [x] Add end-to-end coverage for the release-critical flows below.
+- [x] Test catalog overflow at 320, 390, 768, 1024, 1280, and 1440 px widths in light/dark themes; customer/admin journeys at desktop/mobile sizes.
 - [ ] Test keyboard-only use, screen-reader landmarks/names, zoom to 200%, and reduced motion.
 - [ ] Test light, dark, and system modes with no first-paint theme flash and no theme-specific contrast regression.
 - [ ] Check slow 3G, offline/reconnect, duplicate mounts in React Strict Mode, and repeated focus changes.
@@ -563,15 +567,15 @@ Potential supporting changes:
 - [ ] Customer and administrator screens retain the approved soft pink floral, airy, and minimalist identity at every target breakpoint.
 - [ ] System, light, and dark preferences work across customer and administrator shells without a first-paint flash.
 - [ ] Dark mode uses soft pink, plum, rose-charcoal, and ivory semantic colors and meets WCAG AA contrast.
-- [ ] Customer login defaults to Home and all redirect exceptions are covered by tests.
-- [ ] No visible user-facing `Storefront` label remains.
-- [ ] Stock is visible in catalog and checkout, refreshes as specified, and remains server-authoritative.
-- [ ] The customer UI visibly identifies the signed-in user.
+- [x] Customer login defaults to Home and all redirect exceptions are covered by tests.
+- [x] No visible user-facing `Storefront` label remains.
+- [x] Stock is visible in catalog and checkout, refreshes as specified, and remains server-authoritative.
+- [x] The customer UI visibly identifies the signed-in user.
 - [ ] Customer app bar/mobile drawer and admin sidebar/mobile drawer pass keyboard and responsive QA.
 - [ ] All first-load states use geometry-matched shared skeletons; background refresh keeps current content visible.
-- [ ] Shared caching deduplicates requests, cancels stale work, protects account boundaries, and invalidates after mutations.
+- [x] Shared caching deduplicates requests, cancels stale work, protects account boundaries, and invalidates after mutations.
 - [ ] Reduced motion, focus visibility, contrast, landmarks, labels, and touch targets pass manual review.
-- [ ] `npm run lint`, `npm test`, and `npm run build` pass.
+- [x] `npm run lint`, `npm test`, and `npm run build` pass.
 - [ ] Approved Figma frames and the production build are visually consistent at target breakpoints.
 
 ## Requirement Traceability

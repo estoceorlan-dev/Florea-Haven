@@ -292,10 +292,12 @@ def test_cancellation_failure_rolls_back_stock_and_status(app, admin, product, o
 
 
 def test_migrations_are_repeatable(app):
-    from manage import migrate
+    from manage import BACKEND, migrate
 
     with app.app_context():
         before = one("SELECT COUNT(*) AS n FROM products")["n"]
         migrate(get_db())
         assert one("SELECT COUNT(*) AS n FROM products")["n"] == before
-        assert one("SELECT COUNT(*) AS n FROM schema_migrations")["n"] == 5
+        assert one("SELECT COUNT(*) AS n FROM schema_migrations")["n"] == len(
+            list((BACKEND / "migrations").glob("*.sql"))
+        )

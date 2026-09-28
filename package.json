@@ -24,13 +24,18 @@
     "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed",
     "db:migrate": "node scripts/backend.mjs migrate",
     "db:seed": "node scripts/backend.mjs seed",
-    "admin:create": "node scripts/backend.mjs create-admin"
+    "admin:create": "node scripts/backend.mjs create-admin",
+    "test:e2e": "node scripts/backend.mjs e2e",
+    "images:cleanup": "node scripts/backend.mjs cleanup-images",
+    "check": "npm run lint && npm test && npm run build && npm run test:e2e"
   },
   "engines": {
     "node": ">=22",
     "npm": ">=10"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "concurrently": "^9.2.1",
     "prettier": "^3.6.2"
   }

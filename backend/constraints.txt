@@ -26,3 +26,9 @@ tzdata==2026.4
 waitress==3.0.2
 Werkzeug==3.1.9
 wrapt==2.5.0
+cloudinary==1.46.2
+Pillow==12.3.0
+redis==7.4.1
+certifi==2026.7.22
+six==1.17.0
+urllib3==2.8.0

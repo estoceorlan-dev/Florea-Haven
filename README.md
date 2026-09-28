@@ -2,7 +2,7 @@
 
 Floréa Haven is a storefront for seeds, flowers, and botanical perfumes. **React + Tailwind provide the interface; Python Flask provides the entire backend; PostgreSQL stores the data.**
 
-Implemented features include the public catalog, cookie authentication, persistent carts, Cash on Delivery checkout, customer order history, and administrator catalog, inventory, and order management.
+Implemented features include the public catalog, cookie authentication, persistent carts, Cash on Delivery checkout, customer order history, administrator catalog, inventory, and order management, and managed profile/product image uploads.
 
 ## Requirements
 
@@ -116,4 +116,12 @@ scripts/backend.mjs     Cross-platform npm launcher for the Python environment
 
 See the [API contract](docs/api-contract.md), [Python backend decision](docs/decisions/0002-python-flask-backend.md), [architecture](architecture.md), and [implementation plan](implementation-plan.md).
 
-Never commit `.env` or production credentials. Image uploads and remaining UI/UX visual QA are tracked separately in the existing plans.
+## Render release
+
+Use [the Render deployment runbook](docs/render-deployment.md) with [render.yaml](render.yaml). It provisions a paid Docker web service, private PostgreSQL, and shared rate limiting in Singapore. The build serves React and Flask on one HTTPS origin; migrations run before deployment. Set the three server-only `CLOUDINARY_*` credentials in Render. No production resources have been provisioned by the repository setup.
+
+`npm run check` runs lint, backend/component tests, the production build, and desktop/mobile browser journeys. Install Chromium first with `npx playwright install chromium`. Browser tests create and drop an isolated PostgreSQL schema; Cloudinary calls are stubbed. `compose.smoke.yml` provides a disposable Linux production stack with real PostgreSQL and Redis; see the runbook for commands.
+
+Image uploads use authenticated multipart endpoints, byte-level validation, metadata stripping, responsive Cloudinary delivery, and a durable cleanup queue. Run `npm run images:cleanup` locally or `python backend/manage.py cleanup-images` on the host daily. See [ADR 0003](docs/decisions/0003-managed-images-and-render.md) for the upload protocol decision and [release status](docs/release-status.md) for verification and launch prerequisites.
+
+Never commit `.env` or production credentials. Real Cloudinary delivery, Render HTTPS, backups, and hosted smoke tests must be verified in staging before launch. Figma comparison and full assistive-technology review remain separate release-review items.

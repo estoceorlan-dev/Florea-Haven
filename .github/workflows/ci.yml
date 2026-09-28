@@ -1,0 +1,48 @@
+name: Release checks
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: florea
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: florea_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U florea -d florea_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://florea:test-only-password@localhost:5432/florea_test
+      DATABASE_URL: postgresql://florea:test-only-password@localhost:5432/florea_test
+      JWT_SECRET: ci-only-secret-never-used-for-real-accounts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run backend:setup
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - run: python scripts/check-secrets.py
+      - run: npm audit --audit-level=high
+      - run: backend/.venv/bin/python -m pip install pip-audit
+      - run: backend/.venv/bin/python -m pip_audit -r backend/requirements.txt
+      - run: docker build -t florea-haven:ci .
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: test-results/

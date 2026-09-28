@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: florea-haven
+    runtime: docker
+    plan: 0.5c-512mb
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    preDeployCommand: python backend/manage.py migrate
+    numInstances: 1
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: florea-haven-db
+          property: connectionString
+      - key: TRUST_PROXY
+        value: 'true'
+      - key: RATELIMIT_STORAGE_URI
+        fromService:
+          type: keyvalue
+          name: florea-haven-limits
+          property: connectionString
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+  - type: keyvalue
+    name: florea-haven-limits
+    plan: 256mb
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+databases:
+  - name: florea-haven-db
+    plan: 0.1c-256mb
+    region: singapore
+    postgresMajorVersion: '16'
+    databaseName: florea_haven
+    user: florea
+    ipAllowList: []

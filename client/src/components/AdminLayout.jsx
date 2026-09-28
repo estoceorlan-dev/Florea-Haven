@@ -59,6 +59,7 @@ export function AdminLayout() {
   const menuButtonRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const pageTitle = getPageTitle(location.pathname);
 
@@ -68,13 +69,20 @@ export function AdminLayout() {
 
     try {
       await logout();
-    } finally {
       navigate('/', { replace: true });
+    } catch (error) {
+      setLogoutError(`Could not sign out. ${error.message}`);
+      setIsSigningOut(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-surface-muted text-text">
+      {logoutError && (
+        <p role="alert" className="form-alert">
+          {logoutError}
+        </p>
+      )}
       <a className="skip-link" href="#admin-content">
         Skip to admin content
       </a>

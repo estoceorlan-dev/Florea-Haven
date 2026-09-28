@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell.jsx';
 import { SessionLoading } from '../components/RouteGuards.jsx';
 import { useAuth } from '../hooks/useAuth.js';
@@ -13,7 +13,6 @@ const safeReturnPath = (value) =>
 
 export function RegisterPage() {
   const { user, isLoading, register } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState(null);
@@ -50,7 +49,6 @@ export function RegisterPage() {
 
     try {
       await register({ name: form.name, email: form.email, password: form.password });
-      navigate(returnPath ?? '/', { replace: true });
     } catch (submissionError) {
       setError(submissionError);
     } finally {

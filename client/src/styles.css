@@ -195,7 +195,7 @@
   .nav-link {
     position: relative;
     padding-block: 0.5rem;
-    color: color-mix(in srgb, var(--color-ink) 65%, transparent);
+    color: var(--color-text-muted);
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.12em;

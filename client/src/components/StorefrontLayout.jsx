@@ -1,3 +1,4 @@
+import { Avatar } from './Avatar.jsx';
 import {
   LogOut,
   Menu,
@@ -21,6 +22,7 @@ export function StorefrontLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [logoutError, setLogoutError] = useState('');
   const menuButtonRef = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -45,8 +47,9 @@ export function StorefrontLayout() {
 
     try {
       await logout();
-    } finally {
       navigate('/', { replace: true });
+    } catch (error) {
+      setLogoutError(`Could not sign out. ${error.message}`);
     }
   };
 
@@ -60,6 +63,11 @@ export function StorefrontLayout() {
 
   return (
     <div className="min-h-screen bg-canvas text-text">
+      {logoutError && (
+        <p role="alert" className="form-alert">
+          {logoutError}
+        </p>
+      )}
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -69,7 +77,7 @@ export function StorefrontLayout() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-evergreen/10 bg-canvas/95 backdrop-blur-xl">
-        <div className="page-shell flex h-[76px] items-center justify-between gap-5">
+        <div className="page-shell flex h-[76px] items-center justify-between gap-1 sm:gap-5">
           <button
             ref={menuButtonRef}
             className="icon-button lg:hidden"
@@ -91,7 +99,7 @@ export function StorefrontLayout() {
           </Link>
 
           <nav
-            className="hidden items-center gap-9 lg:flex"
+            className="hidden items-center gap-4 lg:flex xl:gap-9"
             aria-label="Main navigation"
           >
             <NavLink className={navLinkClass} to="/" end>
@@ -143,9 +151,9 @@ export function StorefrontLayout() {
               to={accountPath}
               aria-label={user ? `Open account for ${user.name}` : 'Sign in'}
             >
-              <UserRound size={19} aria-hidden="true" />
+              <Avatar user={user} />
               <span className="hidden min-w-0 sm:block">
-                <span className="block text-[0.6rem] font-bold uppercase tracking-[0.12em] text-ink/45">
+                <span className="block text-[0.6rem] font-bold uppercase tracking-[0.12em] text-text-muted">
                   {user ? 'Your account' : 'Welcome'}
                 </span>
                 <span className="block max-w-28 truncate text-xs font-semibold text-evergreen xl:max-w-36">
@@ -169,7 +177,7 @@ export function StorefrontLayout() {
               </label>
               <input
                 id="site-search"
-                className="min-w-0 flex-1 bg-transparent py-1 text-base outline-none placeholder:text-ink/45"
+                className="min-w-0 flex-1 bg-transparent py-1 text-base outline-none placeholder:text-text-muted"
                 placeholder="Search flowers, seeds, perfumes…"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -194,7 +202,7 @@ export function StorefrontLayout() {
         <div className="border-b border-border bg-surface-muted px-5 py-5">
           <div className="flex items-center gap-3">
             <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-              <UserRound size={20} aria-hidden="true" />
+              <Avatar user={user} className="size-11" />
             </span>
             <div className="min-w-0">
               <p className="truncate font-semibold text-text">
@@ -280,7 +288,7 @@ export function StorefrontLayout() {
                 </span>
               </span>
             </Link>
-            <p className="mt-5 text-sm leading-7 text-ivory/70">
+            <p className="mt-5 text-sm leading-7 text-ivory">
               Garden-grown beauty for homes that make room for softness, scent, and
               small everyday rituals.
             </p>
@@ -288,7 +296,7 @@ export function StorefrontLayout() {
 
           <div>
             <p className="eyebrow text-blush">Explore</p>
-            <div className="mt-5 flex flex-col gap-3 text-sm text-ivory/75">
+            <div className="mt-5 flex flex-col gap-3 text-sm text-ivory">
               <Link className="hover:text-canvas" to="/products">
                 Shop all
               </Link>
@@ -305,17 +313,20 @@ export function StorefrontLayout() {
           </div>
 
           <div>
-            <p className="eyebrow text-blush">Visit us</p>
-            <p className="mt-5 text-sm leading-7 text-ivory/75">
-              Quezon City, Metro Manila
-              <br />
-              Monday–Saturday, 9am–6pm
-              <br />
-              hello@floreahaven.test
+            <p className="eyebrow text-blush">Your orders</p>
+            <p className="mt-5 text-sm leading-7 text-ivory">
+              View your purchase details and follow each order from confirmation to
+              delivery.
             </p>
+            <Link
+              className="mt-3 inline-block text-sm underline hover:text-canvas"
+              to="/orders"
+            >
+              Track your order
+            </Link>
           </div>
         </div>
-        <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-ivory/50">
+        <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-ivory">
           © {new Date().getFullYear()} Floréa Haven. Made to grow slowly.
         </div>
       </footer>

@@ -1,5 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../hooks/useAuth.js';
+import { queryKeys } from '../queries/queryKeys.js';
+import { useAdminQuery } from '../queries/useAdminQuery.js';
 import { ArrowLeft, LoaderCircle, Mail, UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { OrderDetails } from '../components/OrderDetails.jsx';
@@ -17,36 +21,16 @@ import {
 export function AdminOrderDetailPage() {
   const invalidateCatalog = useInvalidateCatalog();
   const { orderId } = useParams();
-  const [order, setOrder] = useState(null);
-  const [error, setError] = useState(null);
-  const [loadedOrderId, setLoadedOrderId] = useState(null);
+  const [mutationError, setError] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState('');
   const [notice, setNotice] = useState('');
-  const [reloadKey, setReloadKey] = useState(0);
   const [pendingStatus, setPendingStatus] = useState('');
 
-  useEffect(() => {
-    let isCurrent = true;
-
-    adminOrderApi
-      .getOrder(orderId)
-      .then((payload) => {
-        if (!isCurrent) return;
-        setOrder(payload.data);
-        setError(null);
-        setLoadedOrderId(orderId);
-      })
-      .catch((loadError) => {
-        if (!isCurrent) return;
-        setOrder(null);
-        setError(loadError);
-        setLoadedOrderId(orderId);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [orderId, reloadKey]);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const orderQuery = useAdminQuery('order', { id: orderId });
+  const order = orderQuery.data?.data;
+  const error = mutationError || orderQuery.error;
 
   const updateStatus = async (status) => {
     setUpdatingStatus(status);
@@ -55,7 +39,14 @@ export function AdminOrderDetailPage() {
     try {
       const payload = await adminOrderApi.updateStatus(orderId, status);
       if (status === 'cancelled') void invalidateCatalog();
-      setOrder(payload.data);
+      queryClient.setQueryData(
+        [...queryKeys.user(user?.id), 'admin', 'order', { id: orderId }],
+        payload,
+      );
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[2] === 'admin' && query.queryKey[3] === 'orders',
+      });
       setError(null);
       setNotice(`Order status updated to ${payload.data.status}.`);
       setPendingStatus('');
@@ -66,20 +57,12 @@ export function AdminOrderDetailPage() {
     }
   };
 
-  if (loadedOrderId !== orderId) {
+  if (orderQuery.isPending) {
     return <AdminDetailSkeleton />;
   }
 
   if (!order && error) {
-    return (
-      <InlineError
-        error={error}
-        onRetry={() => {
-          setLoadedOrderId(null);
-          setReloadKey((key) => key + 1);
-        }}
-      />
-    );
+    return <InlineError error={error} onRetry={orderQuery.refetch} />;
   }
 
   const nextStatuses = allowedOrderTransitions[order.status] ?? [];

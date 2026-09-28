@@ -16,7 +16,7 @@ from .validation import credentials
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 limiter = Limiter(key_func=get_remote_address)
 COOKIE = "florea_session"
-USER_COLUMNS = "id, name, email, role, created_at"
+USER_COLUMNS = "id, name, email, role, created_at, profile_image_url, profile_image_public_id"
 DUMMY_HASH = bcrypt.hashpw(b"not-a-real-password-987654", bcrypt.gensalt())
 
 

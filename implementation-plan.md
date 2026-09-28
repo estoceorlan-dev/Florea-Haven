@@ -393,66 +393,23 @@ Give administrators the minimum operational tools needed to fulfill orders.
 
 ## 13. Phase 8 — Profile and Product Image Uploads
 
-### Goal
+**Status: Implemented.** [ADR 0003](docs/decisions/0003-managed-images-and-render.md) replaces the originally proposed browser signature/finalization protocol with authenticated multipart uploads through Flask. Cloudinary remains the sole provider; the server signs the provider request after validating and normalizing actual image bytes.
 
-Let customers manage their own profile picture and let administrators manage each product's image without pasting external URLs.
-
-### Storage Decision
-
-- [ ] Use [Cloudinary](https://cloudinary.com/documentation/upload_images) as the recommended image storage and delivery service. It supports signed uploads, image transformations, and CDN delivery, which suit avatars and catalog images.
-- [ ] Use short-lived, server-generated upload signatures; never expose `CLOUDINARY_API_SECRET` to the React application.
-- [ ] Keep image files out of PostgreSQL. Store only the secure delivery URL and provider asset identifier needed to replace or delete an image.
-- [ ] Use separate provider folders or prefixes for `profile-images/` and `product-images/`, with generated names instead of original filenames.
-- [ ] If minimizing external services is more important than built-in image transformations, document [Vercel Blob](https://vercel.com/docs/vercel-blob/client-upload) as the alternative. Choose one provider before implementation and do not mix providers in the MVP.
-
-### Database and Configuration
-
-- [ ] Add nullable `profile_image_url` and `profile_image_public_id` fields to `users` through a migration.
-- [ ] Retain `products.image_url` for delivery and add a nullable `image_public_id` field for provider-side replacement and deletion.
-- [ ] Use the product name as its image alt text for the MVP and use the customer's name for their avatar; defer separately authored alt text.
-- [ ] Add provider configuration to `.env.example` and deployment documentation, including `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and server-only `CLOUDINARY_API_SECRET` when Cloudinary is selected.
-- [ ] Define a safe placeholder for users and products without an image.
-
-### Backend and Upload Security
-
-- [ ] Add `POST /api/uploads/signature` to create short-lived signed upload parameters for the requested purpose; require an admin role when the purpose is a product image.
-- [ ] Add `PUT` and `DELETE /api/users/me/profile-image` so a customer can save, replace, and remove only their own profile picture.
-- [ ] Add admin-only `PUT` and `DELETE /api/products/:id/image` endpoints to save, replace, and remove a product image.
-- [ ] Return the profile image metadata from `GET /api/auth/me` and product image metadata from the existing catalog/admin product responses.
-- [ ] Verify the provider response and confirm the expected asset type, account, folder/prefix, and ownership before saving image metadata.
-- [ ] Accept only JPEG, PNG, and WebP images; reject SVG, renamed non-images, and unsupported or animated content.
-- [ ] Enforce a 5 MB upload limit and a 4096×4096-pixel maximum both in the upload provider configuration and in server validation.
-- [ ] Re-encode images, strip unnecessary metadata, normalize them to bounded dimensions, and generate optimized avatar, card, and product-detail variants with automatic quality and format selection where supported.
-- [ ] Stop accepting arbitrary `imageUrl` values from product create/update requests after the managed upload flow is available.
-- [ ] Delete a replaced or removed provider asset only after the database update succeeds, and log enough metadata to retry failed cleanup without logging secrets.
-- [ ] Add a documented orphan-cleanup procedure for uploads that succeed at the provider but are never attached to a user or product.
-- [ ] Apply rate limits to signature/finalization endpoints and return the standard API error format for invalid files or provider failures.
-- [ ] Update `docs/api-contract.md` with the upload, finalization, removal, authorization, validation, and error contracts.
-
-### Frontend
-
-- [ ] Build an authenticated profile/settings view with current-avatar display, file selection, preview, upload progress, replace, remove, and error states.
-- [ ] Show the customer's avatar in the account/navigation UI with a reliable fallback.
-- [ ] Replace the admin product form's manual image-URL workflow with image selection, preview, upload progress, replace, remove, and validation feedback.
-- [ ] Preserve the existing product image if a product edit or replacement upload fails.
-- [ ] Use responsive image variants, explicit dimensions, and lazy loading outside the initial viewport to reduce layout shift and bandwidth.
-
-### Tests
-
-- [ ] Test authorization so customers can modify only their own profile image and only admins can modify product images.
-- [ ] Test valid upload, replacement, removal, missing image, provider failure, and failed provider cleanup paths.
-- [ ] Test spoofed MIME types, unsupported formats, oversized files, excessive dimensions, forged provider identifiers, and expired signatures.
-- [ ] Test avatar and product-image preview, progress, fallback, validation, and retry states in the UI.
-- [ ] Manually verify optimized image delivery on mobile and desktop and confirm secrets never appear in browser code, API responses, or logs.
-
-### Exit Criteria
-
-- A signed-in customer can upload, replace, and remove only their profile picture.
-- An administrator can upload, replace, and remove product images through the product interface.
-- Uploaded images are validated, optimized, delivered from the chosen cloud provider, and represented in PostgreSQL only by metadata.
-- Unauthorized uploads, forged asset references, and invalid image files are rejected safely.
+- [x] Migration 006 adds user/profile and product provider identifiers, plus a durable cleanup queue.
+- [x] Authenticated profile upload/removal and administrator-only product upload/removal endpoints.
+- [x] JPEG/PNG/WebP decoding, MIME agreement, animation rejection, 5 MB and 4096×4096 limits, metadata stripping, and WebP re-encoding.
+- [x] Generated owner-scoped asset IDs, server-only credentials, responsive CDN variants, explicit image dimensions, lazy product images, and avatar/image fallbacks.
+- [x] Account image selection, preview, progress, replacement, removal, validation, and retry.
+- [x] Product editor image controls; save new products before attaching images. Manual product image URLs are rejected by the API.
+- [x] Transactional attachment, preservation of existing images on failures, post-commit deletion, and retryable orphan cleanup.
+- [x] API/provider-failure/database-failure/authorization/validation tests and component tests.
+- [x] Desktop/mobile browser journeys exercise both upload interfaces with a stubbed provider.
+- [x] Configuration, API contract, provider decision, and cleanup procedure documented.
+- [ ] Verify real Cloudinary delivery and secrets configuration in hosted staging.
 
 ---
+
+> Verification details and remaining hosted release gates: [release status](docs/release-status.md). Migration upgrades were tested against an isolated populated schema; no application database was modified.
 
 ## 14. Phase 9 — Quality, Security, and User Experience Hardening
 
@@ -462,21 +419,21 @@ Turn the feature-complete application into a release candidate.
 
 ### Reliability and Testing
 
-- [ ] Add end-to-end tests for the primary customer journey.
-- [ ] Add end-to-end tests for the primary administrator journey.
-- [ ] Cover authorization, checkout calculations, transaction rollback, and stock concurrency with backend tests.
-- [ ] Test database migrations against a fresh database and an existing development database.
+- [x] Add end-to-end tests for the primary customer journey.
+- [x] Add end-to-end tests for the primary administrator journey.
+- [x] Cover authorization, checkout calculations, transaction rollback, and stock concurrency with backend tests.
+- [x] Test database migrations against a fresh database and an existing development database.
 - [ ] Verify all loading, empty, success, validation, unauthorized, forbidden, not-found, conflict, and server-error states.
 
 ### Security
 
 - [ ] Validate and normalize every API input.
-- [ ] Review SQL/ORM use for injection safety.
-- [ ] Configure secure headers, CORS allowlists, body-size limits, and rate limits.
-- [ ] Confirm cookie security or token storage behavior in production.
-- [ ] Avoid exposing stack traces and internal database errors to clients.
+- [x] Review SQL/ORM use for injection safety.
+- [x] Configure secure headers, CORS allowlists, body-size limits, and rate limits.
+- [x] Confirm cookie security or token storage behavior in production.
+- [x] Avoid exposing stack traces and internal database errors to clients.
 - [ ] Run dependency and secret scans and resolve release-blocking findings.
-- [ ] Confirm authorization is enforced server-side for every protected resource.
+- [x] Confirm authorization is enforced server-side for every protected resource.
 
 ### Accessibility and Usability
 
@@ -490,7 +447,7 @@ Turn the feature-complete application into a release candidate.
 - [ ] Confirm database queries use indexes and avoid unnecessary repeated queries.
 - [ ] Verify profile and product image variants are optimized, correctly cached, and lazy-loaded when non-critical.
 - [ ] Add production-safe structured logging and error monitoring if available.
-- [ ] Document backup and restore expectations for the managed database.
+- [x] Document backup and restore expectations for the managed database.
 
 ### Exit Criteria
 
@@ -527,9 +484,9 @@ Deploy a production-ready build and verify it in the actual hosting environment.
 
 ### Documentation
 
-- [ ] Complete the README with setup, environment variables, scripts, tests, migrations, seeds, and deployment instructions.
-- [ ] Document administrator setup and the order-status workflow.
-- [ ] Document known limitations and deferred features.
+- [x] Complete the README with setup, environment variables, scripts, tests, migrations, seeds, and deployment instructions.
+- [x] Document administrator setup and the order-status workflow.
+- [x] Document known limitations and deferred features.
 
 ### Exit Criteria
 
@@ -617,6 +574,6 @@ Update this table as work advances.
 | 5. Checkout and orders | Implemented | — | 2026-08-30 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 6. Admin catalog | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
 | 7. Admin orders | Implemented | — | 2026-08-31 | Automated checks pass; persistent PostgreSQL smoke test and manual responsive QA pending |
-| 8. Image uploads | Not started | — | — | Cloudinary recommended; provider decision required before implementation |
-| 9. Hardening | Not started | — | — | — |
-| 10. Deployment | Not started | — | — | — |
+| 8. Image uploads | Implemented | — | 2026-09-28 | Cloudinary via validated Flask uploads; real provider staging check pending |
+| 9. Hardening | Release checks implemented | — | 2026-09-28 | Automated backend, browser, accessibility and production-container verification; see release status |
+| 10. Deployment | Render prepared | — | 2026-09-28 | Blueprint, Docker, CI and runbook complete; hosted deployment pending |

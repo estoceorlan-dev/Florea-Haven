@@ -18,12 +18,13 @@ export function SessionLoading() {
 }
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logoutLocationKey } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <SessionLoading />;
 
   if (!isAuthenticated) {
+    if (logoutLocationKey === location.key) return <Navigate to="/" replace />;
     return (
       <Navigate
         to="/login"
@@ -37,12 +38,13 @@ export function ProtectedRoute() {
 }
 
 export function AdminRoute() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logoutLocationKey } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <SessionLoading />;
 
   if (!user) {
+    if (logoutLocationKey === location.key) return <Navigate to="/" replace />;
     return (
       <Navigate
         to="/login"

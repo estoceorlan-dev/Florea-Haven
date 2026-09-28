@@ -1,0 +1,48 @@
+# Disposable local production check. These credentials are test-only.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: florea
+      POSTGRES_PASSWORD: smoke-test-only
+      POSTGRES_DB: florea_smoke
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U florea -d florea_smoke']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    tmpfs: /var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  web:
+    build: .
+    ports: ['127.0.0.1:4400:4000']
+    environment:
+      APP_ENV: production
+      CLIENT_ORIGIN: https://florea.example
+      DATABASE_URL: postgresql://florea:smoke-test-only@postgres:5432/florea_smoke
+      JWT_SECRET: disposable-smoke-test-key-at-least-32-bytes
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command:
+      ['sh', '-c', 'python backend/manage.py migrate && python backend/manage.py serve']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/api/health', timeout=4)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20

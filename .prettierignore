@@ -8,3 +8,7 @@ backend/.venv/
 backend/.pytest_cache/
 backend/.ruff_cache/
 .postgres-test/
+
+.pptx-build/
+test-results/
+playwright-report/

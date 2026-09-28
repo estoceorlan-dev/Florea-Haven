@@ -1,3 +1,4 @@
+import { useAdminQuery } from '../queries/useAdminQuery.js';
 import {
   ChevronLeft,
   ChevronRight,
@@ -5,12 +6,11 @@ import {
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { OrderStatusBadge } from '../components/OrderStatusBadge.jsx';
 import { EmptyState, FeedbackBanner } from '../components/ui/PageState.jsx';
 import { AdminListSkeleton } from '../components/ui/Skeleton.jsx';
-import { adminOrderApi } from '../services/api.js';
 import { formatCurrency, formatDateTime } from '../utils/currency.js';
 
 const initialFilters = {
@@ -26,33 +26,11 @@ const orderNumber = (id) => id.slice(0, 8).toUpperCase();
 export function AdminOrdersPage() {
   const [draftFilters, setDraftFilters] = useState(initialFilters);
   const [query, setQuery] = useState({ ...initialFilters, page: 1 });
-  const [orders, setOrders] = useState([]);
-  const [pagination, setPagination] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    adminOrderApi
-      .getOrders({ ...query, limit: 20 })
-      .then((payload) => {
-        if (!isCurrent) return;
-        setOrders(payload.data);
-        setPagination(payload.pagination);
-        setError(null);
-      })
-      .catch((loadError) => {
-        if (isCurrent) setError(loadError);
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [query]);
+  const ordersQuery = useAdminQuery('orders', { ...query, limit: 20 });
+  const orders = ordersQuery.data?.data ?? [];
+  const pagination = ordersQuery.data?.pagination;
+  const isLoading = ordersQuery.isPending;
+  const error = ordersQuery.error;
 
   const updateDraft = (field, value) => {
     setDraftFilters((current) => ({ ...current, [field]: value }));
@@ -60,7 +38,6 @@ export function AdminOrdersPage() {
 
   const applyFilters = (event) => {
     event.preventDefault();
-    setIsLoading(true);
     setQuery({
       ...draftFilters,
       search: draftFilters.search.trim(),
@@ -70,7 +47,6 @@ export function AdminOrdersPage() {
   };
 
   const clearFilters = () => {
-    setIsLoading(true);
     setDraftFilters(initialFilters);
     setQuery({ ...initialFilters, page: 1 });
   };
@@ -166,7 +142,11 @@ export function AdminOrdersPage() {
       </form>
 
       {error && (
-        <FeedbackBanner className="mt-5" tone="error" onDismiss={() => setError(null)}>
+        <FeedbackBanner
+          className="mt-5"
+          tone="error"
+          onDismiss={() => ordersQuery.refetch()}
+        >
           {error.message}
         </FeedbackBanner>
       )}
@@ -254,7 +234,6 @@ export function AdminOrdersPage() {
               aria-label="Previous order page"
               disabled={!pagination.hasPreviousPage}
               onClick={() => {
-                setIsLoading(true);
                 setQuery((current) => ({ ...current, page: current.page - 1 }));
               }}
             >
@@ -266,7 +245,6 @@ export function AdminOrdersPage() {
               aria-label="Next order page"
               disabled={!pagination.hasNextPage}
               onClick={() => {
-                setIsLoading(true);
                 setQuery((current) => ({ ...current, page: current.page + 1 }));
               }}
             >

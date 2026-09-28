@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowLeft, Banknote, LockKeyhole } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
 import { AvailabilityStatus } from '../components/ui/AvailabilityStatus.jsx';
 import { CartStockStatus } from '../components/ui/CartStockStatus.jsx';
@@ -100,7 +100,7 @@ export function CheckoutPage() {
     setCart,
     setCheckoutRefreshEnabled,
   } = useCart();
-  const navigate = useNavigate();
+  const [completedOrderId, setCompletedOrderId] = useState(null);
   const [address, setAddress] = useState(() => initialAddress(user.name));
   const [error, setError] = useState(null);
   const [refreshFailure, setRefreshFailure] = useState(null);
@@ -133,6 +133,8 @@ export function CheckoutPage() {
     if (error) noticeRef.current?.focus();
   }, [error]);
 
+  if (completedOrderId)
+    return <Navigate to={`/orders/${completedOrderId}/confirmation`} replace />;
   if (isLoading) return <CheckoutSkeleton />;
   if (cartError) {
     return (
@@ -213,13 +215,13 @@ export function CheckoutPage() {
     try {
       const payload = await orderApi.placeOrder(input, submission.current.key);
       const newOrder = payload.data.order;
+      setCompletedOrderId(newOrder.id);
       setCart(emptyCart);
       queryClient.setQueryData(queryKeys.order(user.id, newOrder.id), {
         data: newOrder,
       });
       void queryClient.invalidateQueries({ queryKey: queryKeys.orders(user.id) });
       void invalidateCatalog();
-      navigate(`/orders/${newOrder.id}/confirmation`, { replace: true });
     } catch (submissionError) {
       void invalidateCatalog();
       if (

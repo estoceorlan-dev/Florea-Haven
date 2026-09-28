@@ -1,0 +1,15 @@
+.git
+.env*
+**/.env*
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/dist
+.postgres-test
+.pptx-build
+test-results
+playwright-report
+backend/tests
+client/src/**/*.test.*

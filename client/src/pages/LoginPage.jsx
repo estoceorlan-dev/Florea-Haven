@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell.jsx';
 import { SessionLoading } from '../components/RouteGuards.jsx';
 import { useAuth } from '../hooks/useAuth.js';
@@ -11,7 +11,6 @@ const safeReturnPath = (value) =>
 
 export function LoginPage() {
   const { user, isLoading, login } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
@@ -31,10 +30,7 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const signedInUser = await login(form);
-      navigate(returnPath ?? (signedInUser.role === 'admin' ? '/admin' : '/'), {
-        replace: true,
-      });
+      await login(form);
     } catch (submissionError) {
       setError(submissionError);
     } finally {

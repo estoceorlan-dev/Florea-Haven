@@ -4,22 +4,35 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { ThemeSelector } from '../components/ui/ThemeSelector.jsx';
 import { FeedbackBanner } from '../components/ui/PageState.jsx';
+import { ImageUpload } from '../components/ImageUpload.jsx';
+import { Avatar } from '../components/Avatar.jsx';
 
 export function AccountPage() {
-  const { user, logout, sessionError } = useAuth();
+  const { user, logout, sessionError, updateUser } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   const signOut = async () => {
     setIsSigningOut(true);
-    await logout();
-    navigate('/', { replace: true });
+    try {
+      await logout();
+      navigate('/', { replace: true });
+    } catch (error) {
+      setLogoutError(`Could not sign out. ${error.message}`);
+      setIsSigningOut(false);
+    }
   };
 
   return (
     <section className="page-shell py-14 sm:py-20">
       <div className="mx-auto max-w-3xl">
+        {logoutError && (
+          <FeedbackBanner tone="error" className="mb-6">
+            {logoutError}
+          </FeedbackBanner>
+        )}
         {location.state?.accessDenied && (
           <FeedbackBanner className="mb-6" tone="error">
             That area is reserved for administrators. Your customer account is signed in
@@ -36,6 +49,7 @@ export function AccountPage() {
         <div className="rounded-card border border-border bg-surface p-7 shadow-low sm:p-10">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
             <div>
+              <Avatar user={user} className="mb-4 size-16" />
               <p className="eyebrow text-clay">Your account</p>
               <h1 className="mt-3 font-display text-5xl tracking-[-0.05em] text-evergreen">
                 Welcome, {user.name.split(' ')[0]}.
@@ -57,6 +71,14 @@ export function AccountPage() {
             </button>
           </div>
 
+          <div className="mt-8">
+            <ImageUpload
+              endpoint="/api/users/me/profile-image"
+              src={user.profile_image_url}
+              label="Profile picture"
+              onSaved={(payload) => updateUser(payload.data.user)}
+            />
+          </div>
           <div className="mt-10 grid gap-4 border-t border-border pt-8 sm:grid-cols-2">
             <Link
               className="motion-lift group rounded-card border border-border bg-surface-muted p-6 shadow-low"

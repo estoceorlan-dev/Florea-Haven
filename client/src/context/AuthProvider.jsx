@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../services/api.js';
 import { AuthContext } from './AuthContext.js';
+import { useLocation } from 'react-router-dom';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionError, setSessionError] = useState(null);
+  const [logoutLocationKey, setLogoutLocationKey] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     let isCurrent = true;
@@ -44,13 +47,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await authApi.logout();
-    } finally {
-      setUser(null);
-      setSessionError(null);
-    }
-  }, []);
+    await authApi.logout();
+    setLogoutLocationKey(location.key);
+    setUser(null);
+    setSessionError(null);
+  }, [location.key]);
 
   const value = useMemo(
     () => ({
@@ -61,8 +62,10 @@ export function AuthProvider({ children }) {
       register,
       login,
       logout,
+      updateUser: setUser,
+      logoutLocationKey,
     }),
-    [isLoading, login, logout, register, sessionError, user],
+    [isLoading, login, logout, register, sessionError, user, logoutLocationKey],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

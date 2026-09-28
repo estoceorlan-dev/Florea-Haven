@@ -1,5 +1,7 @@
+import { useInvalidateCatalog } from '../queries/useInvalidateCatalog.js';
+import { useAdminQuery } from '../queries/useAdminQuery.js';
 import { LoaderCircle, Pencil, Plus, Tags, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx';
 import { EmptyState, FeedbackBanner } from '../components/ui/PageState.jsx';
 import { AdminListSkeleton } from '../components/ui/Skeleton.jsx';
@@ -138,51 +140,22 @@ function CategoryForm({ category, onCancel, onSubmit }) {
 }
 
 export function AdminCategoriesPage() {
-  const [categories, setCategories] = useState([]);
   const [editing, setEditing] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [mutationError, setError] = useState(null);
   const [notice, setNotice] = useState('');
   const [pendingDelete, setPendingDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadCategories = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const payload = await adminCatalogApi.getCategories();
-      setCategories(payload.data);
-      setError(null);
-    } catch (loadError) {
-      setError(loadError);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    adminCatalogApi
-      .getCategories()
-      .then((payload) => {
-        if (!isCurrent) return;
-        setCategories(payload.data);
-        setError(null);
-      })
-      .catch((loadError) => {
-        if (isCurrent) setError(loadError);
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
+  const categoriesQuery = useAdminQuery('categories');
+  const categories = categoriesQuery.data?.data ?? [];
+  const isLoading = categoriesQuery.isPending;
+  const error = mutationError || categoriesQuery.error;
+  const invalidateCatalog = useInvalidateCatalog();
+  const loadCategories = invalidateCatalog;
 
   const saveCategory = async (input) => {
     setNotice('');
+    setError(null);
     try {
       const payload = editing
         ? await adminCatalogApi.updateCategory(editing.id, input)
@@ -203,6 +176,7 @@ export function AdminCategoriesPage() {
   const removeCategory = async () => {
     if (!pendingDelete) return;
     setNotice('');
+    setError(null);
     setIsDeleting(true);
     try {
       await adminCatalogApi.deleteCategory(pendingDelete.id);

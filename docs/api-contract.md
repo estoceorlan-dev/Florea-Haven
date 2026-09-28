@@ -216,7 +216,7 @@ The API rejects an empty cart, stale cart revision, inactive product, changed/in
 ## Implemented catalog administration rules
 
 - Category names and slugs are trimmed and unique case-insensitively. Deleting a category referenced by any product returns `409 CATEGORY_IN_USE`.
-- Product names are 2–120 characters; descriptions are 1–5,000 characters; prices are PHP values from 0 through 9,999,999.99; stock is an integer at least zero; category IDs are UUIDs; and image URLs, when supplied, must be absolute HTTP(S) URLs.
+- Product names are 2–120 characters; descriptions are 1–5,000 characters; prices are PHP values from 0 through 9,999,999.99; stock is an integer at least zero; category IDs are UUIDs; and image metadata is managed through the upload endpoints below. `imageUrl` is rejected on product create/update. Existing stored image URLs remain readable.
 - Product and category removal preserves every historical order snapshot.
 
 `GET /api/admin/products` supports `search`, `category` (UUID), `status` (`all`, `active`, or `inactive`), `sort` (`newest`, `name-asc`, `stock-asc`, or `stock-desc`), `page`, and `limit`. `DELETE /api/products/:id` is a soft deactivation; an administrator can reactivate the product by sending `{ "isActive": true }` to `PUT /api/products/:id`.
@@ -237,3 +237,22 @@ responses also include the immutable item and delivery-address snapshots.
 - `delivered` and `cancelled` are terminal. Skips, reversals, and cancellation after preparation return `409 INVALID_STATUS_TRANSITION`.
 - A valid transition to `cancelled` restores the order's item quantities exactly once in the same database transaction as the status change.
 - Every valid change updates both `status_updated_at` and `updated_at`.
+
+## Managed images (implemented)
+
+The server receives file bytes and signs uploads to Cloudinary itself; there is no browser signature or client-supplied asset-finalization endpoint. See [ADR 0003](decisions/0003-managed-images-and-render.md).
+
+| Method and route                     | Authorization  | Input            | Success                  |
+| ------------------------------------ | -------------- | ---------------- | ------------------------ |
+| `PUT /api/users/me/profile-image`    | Signed-in user | Multipart `file` | `200 { data: { user } }` |
+| `DELETE /api/users/me/profile-image` | Signed-in user | None             | `200 { data: { user } }` |
+| `PUT /api/products/:id/image`        | Administrator  | Multipart `file` | `200 { data: product }`  |
+| `DELETE /api/products/:id/image`     | Administrator  | None             | `200 { data: product }`  |
+
+Users gain nullable `profile_image_url` and `profile_image_public_id`; product responses gain nullable `image_public_id`. Authentication responses include the profile fields. Removal sets both URL and provider ID to null and is idempotent when no image exists. The user route always selects the session owner; product identifiers are UUIDs and existence is checked before upload.
+
+The decoded file must be JPEG, PNG, or WebP, match its MIME type, be no more than 5 MB, and have both dimensions at most 4096 pixels. Animation, SVG, malformed content, and JSON asset references are rejected. Images are re-encoded with metadata removed and maximum dimensions of 512 pixels for avatars or 1600 pixels for products. The server creates the asset ID and delivery URL; secrets and signed upload parameters are never returned to the client.
+
+Errors use the standard envelope: `400 VALIDATION_ERROR` with field `file` and readable detail, `401 AUTHENTICATION_REQUIRED`, `403 ADMIN_ACCESS_REQUIRED`, `404 PRODUCT_NOT_FOUND`, `413 IMAGE_TOO_LARGE` (or `REQUEST_ERROR` when the entire body exceeds the transport limit), `429 RATE_LIMITED`, `503 IMAGE_UPLOAD_BUSY` when the per-process upload slot is occupied, `503 IMAGES_UNAVAILABLE` for absent configuration, and `502 IMAGE_UPLOAD_FAILED` for provider failures. Upload/removal rates are 20/hour per user for profiles and 60/hour per administrator for products.
+
+A failed upload or database write preserves the attached image. Old assets are queued transactionally, then deleted after commit. Failed cleanup does not fail the successful image change and is retried by `cleanup-images`. Interrupted uploads are eligible for cleanup after 24 hours. Client callers should refetch the resource after an ambiguous network timeout before replacing it again.

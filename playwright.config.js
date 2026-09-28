@@ -1,0 +1,26 @@
+const { defineConfig, devices } = require('@playwright/test');
+
+module.exports = defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  workers: 1,
+  timeout: 60000,
+  use: {
+    baseURL: 'http://127.0.0.1:4173',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'mobile',
+      use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
+    },
+  ],
+  webServer: {
+    command: `"${process.env.E2E_PYTHON}" scripts/e2e-server.py`,
+    url: 'http://127.0.0.1:4173/api/health',
+    reuseExistingServer: false,
+    timeout: 30000,
+  },
+});

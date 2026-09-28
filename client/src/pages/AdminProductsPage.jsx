@@ -1,8 +1,8 @@
+import { useAdminQuery } from '../queries/useAdminQuery.js';
 import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  ImagePlus,
   LoaderCircle,
   PackagePlus,
   Pencil,
@@ -10,7 +10,8 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { ImageUpload } from '../components/ImageUpload.jsx';
 import { ProductImage } from '../components/ProductImage.jsx';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx';
 import { EmptyState, FeedbackBanner } from '../components/ui/PageState.jsx';
@@ -27,7 +28,6 @@ const blankProduct = (categories) => ({
   description: '',
   price: '',
   stockQuantity: '0',
-  imageUrl: '',
   featured: false,
   isActive: true,
 });
@@ -42,13 +42,12 @@ const productValues = (product, categories) =>
         description: product.description,
         price: String(product.price),
         stockQuantity: String(product.stock_quantity),
-        imageUrl: product.image_url ?? '',
         featured: product.featured,
         isActive: product.is_active,
       }
     : blankProduct(categories);
 
-function ProductForm({ categories, product, onCancel, onSubmit }) {
+function ProductForm({ categories, product, onCancel, onSubmit, onImageSaved }) {
   const [values, setValues] = useState(() => productValues(product, categories));
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -86,7 +85,6 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
         description: values.description,
         price,
         stockQuantity,
-        imageUrl: values.imageUrl,
         featured: values.featured,
         ...(product ? { isActive: values.isActive } : {}),
       });
@@ -211,25 +209,20 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
             Use 0 when the item is temporarily unavailable.
           </span>
         </label>
-        <label className="form-field sm:col-span-2">
-          Image URL
-          <span className="relative">
-            <ImagePlus
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-leaf"
-              size={17}
-              aria-hidden="true"
+        <div className="sm:col-span-2">
+          {product ? (
+            <ImageUpload
+              endpoint={`/api/products/${product.id}/image`}
+              src={product.image_url}
+              label="Product image"
+              onSaved={onImageSaved}
             />
-            <input
-              className="form-input pl-10"
-              name="imageUrl"
-              type="url"
-              value={values.imageUrl}
-              maxLength={2048}
-              placeholder="https://example.com/product.jpg"
-              onChange={updateValue}
-            />
-          </span>
-        </label>
+          ) : (
+            <p className="form-hint">
+              Save the product, then choose Edit to upload its image.
+            </p>
+          )}
+        </div>
         <label className="form-field sm:col-span-2">
           Description
           <textarea
@@ -291,9 +284,6 @@ function ProductForm({ categories, product, onCancel, onSubmit }) {
 
 export function AdminProductsPage() {
   const invalidateCatalog = useInvalidateCatalog();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [pagination, setPagination] = useState(null);
   const [query, setQuery] = useState({
     search: '',
     category: '',
@@ -303,63 +293,27 @@ export function AdminProductsPage() {
   });
   const [searchText, setSearchText] = useState('');
   const [editing, setEditing] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [mutationError, setError] = useState(null);
   const [notice, setNotice] = useState('');
   const [pendingDeactivate, setPendingDeactivate] = useState(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
 
-  const loadProducts = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const payload = await adminCatalogApi.getProducts({ ...query, limit: 12 });
-      setProducts(payload.data);
-      setPagination(payload.pagination);
-      setError(null);
-    } catch (loadError) {
-      setError(loadError);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [query]);
-
-  useEffect(() => {
-    adminCatalogApi
-      .getCategories()
-      .then((payload) => setCategories(payload.data))
-      .catch(setError);
-  }, []);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    adminCatalogApi
-      .getProducts({ ...query, limit: 12 })
-      .then((payload) => {
-        if (!isCurrent) return;
-        setProducts(payload.data);
-        setPagination(payload.pagination);
-        setError(null);
-      })
-      .catch((loadError) => {
-        if (isCurrent) setError(loadError);
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [query]);
+  const productsQuery = useAdminQuery('products', { ...query, limit: 12 });
+  const categoriesQuery = useAdminQuery('categories');
+  const products = productsQuery.data?.data ?? [];
+  const categories = categoriesQuery.data?.data ?? [];
+  const pagination = productsQuery.data?.pagination;
+  const isLoading = productsQuery.isPending || categoriesQuery.isPending;
+  const error = mutationError || productsQuery.error || categoriesQuery.error;
+  const loadProducts = productsQuery.refetch;
 
   const setFilter = (field, value) => {
-    setIsLoading(true);
     setQuery((current) => ({ ...current, [field]: value, page: 1 }));
   };
 
   const saveProduct = async (input) => {
     setNotice('');
+    setError(null);
     try {
       const payload = editing
         ? await adminCatalogApi.updateProduct(editing.id, input)
@@ -381,6 +335,7 @@ export function AdminProductsPage() {
   const deactivate = async () => {
     if (!pendingDeactivate) return;
     setNotice('');
+    setError(null);
     setIsDeactivating(true);
     try {
       await adminCatalogApi.deactivateProduct(pendingDeactivate.id);
@@ -398,6 +353,7 @@ export function AdminProductsPage() {
 
   const restore = async (product) => {
     setNotice('');
+    setError(null);
     try {
       await adminCatalogApi.updateProduct(product.id, { isActive: true });
       void invalidateCatalog();
@@ -658,6 +614,11 @@ export function AdminProductsPage() {
               product={editing}
               onCancel={() => setEditing(null)}
               onSubmit={saveProduct}
+              onImageSaved={(payload) => {
+                setEditing(payload.data);
+                void invalidateCatalog();
+                void loadProducts();
+              }}
             />
           ) : (
             <div className="rounded-card border border-border bg-surface p-7 text-sm leading-6 text-text-muted shadow-low">

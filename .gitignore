@@ -16,3 +16,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .postgres-test/
+test-results/
+playwright-report/

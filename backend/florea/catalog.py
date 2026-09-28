@@ -22,7 +22,6 @@ PRODUCT_COLUMNS = {
     "description": "description",
     "price": "price",
     "stockQuantity": "stock_quantity",
-    "imageUrl": "image_url",
     "featured": "featured",
     "isActive": "is_active",
 }
@@ -63,6 +62,7 @@ def map_product(row, admin=False):
         "price",
         "stock_quantity",
         "image_url",
+        "image_public_id",
         "featured",
         "created_at",
     ]

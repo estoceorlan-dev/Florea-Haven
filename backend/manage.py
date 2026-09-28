@@ -38,7 +38,9 @@ def seed(connection):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["dev", "serve", "migrate", "seed", "create-admin"])
+    parser.add_argument(
+        "command", choices=["dev", "serve", "migrate", "seed", "create-admin", "cleanup-images"]
+    )
     args = parser.parse_args()
     if args.command == "serve":
         # Production serving must never silently generate a temporary signing key
@@ -50,6 +52,10 @@ def main():
             migrate(get_db())
         elif args.command == "seed":
             seed(get_db())
+        elif args.command == "cleanup-images":
+            from florea.images import cleanup_pending
+
+            print(f"Cleaned {cleanup_pending()} image assets.")
         elif args.command == "create-admin":
             name = string(os.getenv("ADMIN_NAME"), "ADMIN_NAME", 2, 80)
             email = string(
@@ -73,7 +79,22 @@ def main():
         else:
             from waitress import serve
 
-            serve(app, host="0.0.0.0", port=int(os.getenv("PORT", "4000")), threads=8)
+            app.logger.setLevel("INFO")
+            proxy = {}
+            if os.getenv("TRUST_PROXY", "false").lower() == "true":
+                proxy = dict(
+                    trusted_proxy="*",
+                    trusted_proxy_count=1,
+                    trusted_proxy_headers={"x-forwarded-for", "x-forwarded-proto"},
+                )
+            serve(
+                app,
+                host="0.0.0.0",
+                port=int(os.getenv("PORT", "4000")),
+                threads=8,
+                max_request_body_size=6 * 1024 * 1024,
+                **proxy,
+            )
 
 
 if __name__ == "__main__":

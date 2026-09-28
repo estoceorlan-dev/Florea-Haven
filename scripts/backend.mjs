@@ -41,7 +41,9 @@ if (command === 'setup') {
     console.error('Python environment is missing. Run npm run backend:setup first.');
     process.exit(1);
   }
-  if (command === 'test') {
+  if (command === 'e2e') {
+    run(python, [path.join(root, 'scripts/e2e.py'), ...process.argv.slice(3)]);
+  } else if (command === 'test') {
     run(python, ['-m', 'pytest', ...process.argv.slice(3)]);
   } else if (command === 'lint') {
     run(python, ['-m', 'ruff', 'check', '.']);

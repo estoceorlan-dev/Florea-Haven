@@ -90,7 +90,7 @@ describe('admin order flows', () => {
     expect(
       await screen.findByRole('heading', { name: 'Customer orders' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Mara Santos')).toBeInTheDocument();
+    expect(await screen.findByText('Mara Santos')).toBeInTheDocument();
     expect(screen.getByText('mara.orders@example.com')).toBeInTheDocument();
     expect(screen.getAllByText('Pending')).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'Review' })).toHaveAttribute(

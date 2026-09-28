@@ -3,7 +3,6 @@
 import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlparse
 from uuid import UUID
 
 from flask import request
@@ -105,7 +104,6 @@ PRODUCT_FIELDS = {
     "description",
     "price",
     "stockQuantity",
-    "imageUrl",
     "featured",
 }
 CATEGORY_FIELDS = {"name", "slug", "description"}
@@ -115,11 +113,7 @@ def catalog_input(product=False, update=False):
     allowed = PRODUCT_FIELDS | ({"isActive"} if update else set()) if product else CATEGORY_FIELDS
     data = body(allowed)
     if not update:
-        data = (
-            {"imageUrl": None, "featured": False, **data}
-            if product
-            else {"description": "", **data}
-        )
+        data = {"featured": False, **data} if product else {"description": "", **data}
         required = PRODUCT_FIELDS - {"slug"} if product else {"name", "description"}
         for key in required - data.keys():
             invalid(key, "This field is required.")
@@ -143,19 +137,6 @@ def catalog_input(product=False, update=False):
             result[field] = number(value, field, 0, 2147483647, integer=True)
         elif field in {"featured", "isActive"}:
             result[field] = boolean(value, field)
-        elif field == "imageUrl":
-            if value is None or value == "":
-                result[field] = None
-            else:
-                value = string(value, field, 1, 2048)
-                try:
-                    parsed = urlparse(value)
-                    valid = parsed.scheme in {"http", "https"} and bool(parsed.hostname)
-                except ValueError:
-                    valid = False
-                if not valid:
-                    invalid(field, "Image URL must be an absolute HTTP or HTTPS URL.")
-                result[field] = value
     if update and not result:
         invalid("", "Provide at least one field to update.")
     return result
