@@ -34,47 +34,63 @@ export function HomePage() {
 
   return (
     <>
-      <section className="relative min-h-[calc(100svh-108px)] overflow-hidden bg-sage">
-        <div className="absolute inset-y-0 right-0 w-full md:w-[57%]">
-          <img
-            className="size-full object-cover object-center"
-            src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1800&q=90"
-            alt="A romantic arrangement of pale garden flowers"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-sage via-sage/40 to-transparent md:from-sage/80" />
-          <div className="absolute inset-0 bg-evergreen/15 md:bg-transparent" />
-        </div>
-
-        <div className="page-shell relative z-10 flex min-h-[calc(100svh-108px)] items-end pb-16 pt-24 sm:items-center sm:pb-20 md:py-24">
-          <div className="max-w-2xl">
-            <p className="eyebrow mb-5 text-evergreen">Flowers · Seeds · Fragrance</p>
-            <h1 className="font-display text-[clamp(3.6rem,8vw,7.75rem)] leading-[0.84] tracking-[-0.065em] text-evergreen">
+      <section className="page-shell pt-4 sm:pt-6">
+        <div className="grid overflow-hidden rounded-[2rem] border border-border/70 bg-linear-to-br from-surface-muted via-canvas to-brand-soft shadow-low lg:min-h-[620px] lg:grid-cols-2 lg:rounded-[2.5rem]">
+          <div className="flex animate-reveal flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-12 xl:px-16">
+            <p className="eyebrow mb-7 flex items-center gap-2 text-brand-strong">
+              <Flower2 size={16} strokeWidth={1.5} aria-hidden="true" />
+              Flowers · Seeds · Fragrance
+            </p>
+            <h1 className="font-display text-[clamp(3.4rem,6.8vw,6.5rem)] leading-[0.96] tracking-[-0.06em] text-evergreen">
               Let beauty
               <span className="block font-normal italic text-clay">take root.</span>
             </h1>
-            <p className="mt-7 max-w-md text-base leading-7 text-evergreen/75 sm:text-lg sm:leading-8">
+            <p className="mt-6 max-w-md text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
               Garden-made gestures and botanical rituals, chosen to bring a little more
               softness into every day.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link className="button-primary" to="/products">
                 Explore the collection
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
-              <Link className="button-quiet" to="/products?category=flowers">
+              <Link className="button-secondary" to="/products?category=flowers">
                 Shop fresh flowers
               </Link>
             </div>
+            <div className="mt-8 flex items-center gap-3 border-t border-border pt-5 text-xs leading-5 text-text-muted">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+                <Leaf size={17} strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              A little nature. A little everyday joy.
+            </div>
           </div>
-        </div>
-
-        <div className="absolute bottom-6 right-6 z-10 hidden items-center gap-3 text-xs uppercase tracking-[0.16em] text-white/90 md:flex">
-          <span className="h-px w-12 bg-white/70" />
-          Thoughtfully selected in Manila
+          <div className="relative m-3 mt-0 min-h-72 overflow-hidden rounded-[1.5rem] bg-brand-soft sm:min-h-96 lg:m-4 lg:ml-0 lg:rounded-[2rem]">
+            <img
+              className="absolute inset-0 size-full object-cover object-center"
+              src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1800&q=90"
+              alt="A romantic arrangement of pale garden flowers"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-image-overlay/55 via-transparent to-transparent" />
+            <div className="absolute inset-x-5 bottom-5 flex items-center gap-3 rounded-2xl border border-white/30 bg-white/90 p-4 text-[#3d2a31] shadow-lg backdrop-blur-md sm:inset-x-7 sm:bottom-7 sm:p-5">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f8e4ea] text-[#74374d]">
+                <Flower2 size={21} strokeWidth={1.5} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-display text-xl leading-tight">
+                  Rooted in the little things
+                </p>
+                <p className="mt-1 text-xs text-[#705b63]">
+                  Thoughtfully selected in Bohol
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="page-shell py-20 md:py-28">
+      <section className="page-shell py-14 sm:py-20 lg:py-24">
         <div className="mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end md:mb-14">
           <div>
             <p className="eyebrow text-clay">Find your kind of beautiful</p>
@@ -93,7 +109,7 @@ export function HomePage() {
         )}
 
         {categories.data && (
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3 lg:gap-6">
             {categories.data.data.map((category) => {
               const details = categoryDetails[category.slug];
               return (
@@ -103,20 +119,21 @@ export function HomePage() {
                   to={`/products?category=${category.slug}`}
                 >
                   <img
-                    className="size-full object-cover transition duration-700 group-hover:scale-105"
+                    className="size-full object-cover transition-transform duration-700 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105"
                     src={details.image}
                     alt=""
+                    loading="lazy"
                   />
                   <span className="absolute inset-0 bg-gradient-to-t from-image-overlay/90 via-image-overlay/5 to-transparent" />
                   <span className="absolute left-5 top-5 grid size-9 place-items-center rounded-full border border-white/40 text-xs text-white">
                     {details.number}
                   </span>
-                  <span className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
+                  <span className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-4 lg:p-8">
                     <span className="text-[0.64rem] font-bold uppercase tracking-[0.18em] text-blush">
                       {details.label}
                     </span>
                     <span className="mt-1 flex items-end justify-between gap-4">
-                      <span className="font-display text-4xl tracking-[-0.04em]">
+                      <span className="font-display text-4xl tracking-[-0.04em] sm:text-3xl lg:text-4xl">
                         {category.name}
                       </span>
                       <ArrowRight
@@ -136,7 +153,7 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="bg-surface py-20 md:py-28">
+      <section className="rounded-[2rem] border-y border-border/70 bg-surface-muted/50 py-14 sm:mx-4 sm:rounded-[2.5rem] sm:py-20 lg:py-24">
         <div className="page-shell">
           <div className="mb-10 flex items-end justify-between gap-4 md:mb-14">
             <div>
@@ -177,9 +194,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="page-shell py-20 md:py-28">
+      <section className="page-shell py-14 sm:py-20 lg:py-24">
         <div className="grid overflow-hidden rounded-card border border-border bg-surface-muted shadow-low md:grid-cols-2">
-          <div className="relative min-h-[360px]">
+          <div className="relative min-h-64 sm:min-h-[360px]">
             <img
               className="absolute inset-0 size-full object-cover"
               src="https://images.unsplash.com/photo-1497250681960-ef046c08a56e?auto=format&fit=crop&w=1400&q=85"
@@ -187,7 +204,7 @@ export function HomePage() {
               loading="lazy"
             />
           </div>
-          <div className="flex items-center px-8 py-14 sm:px-12 md:px-16 md:py-20">
+          <div className="flex items-center px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
             <div>
               <p className="eyebrow text-clay">The Floréa promise</p>
               <h2 className="mt-4 max-w-md font-display text-4xl leading-[1.02] tracking-[-0.045em] text-evergreen sm:text-5xl">
@@ -205,10 +222,10 @@ export function HomePage() {
                   [Sparkles, 'Small-batch'],
                 ].map(([Icon, label]) => (
                   <div className="flex items-center gap-2.5" key={label}>
-                    <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
-                    <span className="text-xs font-bold uppercase tracking-[0.12em]">
-                      {label}
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-surface text-brand">
+                      <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
                     </span>
+                    <span className="text-xs font-semibold">{label}</span>
                   </div>
                 ))}
               </div>

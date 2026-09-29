@@ -93,12 +93,13 @@ describe('ThemeProvider', () => {
     );
 
     const selector = screen.getByRole('combobox', { name: 'Appearance' });
-    expect(selector).toHaveValue('system');
+    expect(selector).toHaveTextContent('System default');
     expect(screen.getByText('light theme active')).toBeInTheDocument();
 
-    fireEvent.change(selector, { target: { value: 'dark' } });
+    fireEvent.click(selector);
+    fireEvent.click(screen.getByRole('option', { name: 'Dark' }));
 
-    await waitFor(() => expect(selector).toHaveValue('dark'));
+    await waitFor(() => expect(selector).toHaveTextContent('Dark'));
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
     expect(screen.getByText('dark theme active')).toBeInTheDocument();
@@ -107,5 +108,14 @@ describe('ThemeProvider', () => {
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
     expect(selector).toHaveAccessibleDescription('dark theme active');
+    expect(selector).toHaveFocus();
+
+    fireEvent.click(selector);
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('Dark');
+    fireEvent.click(screen.getByRole('option', { name: 'System default' }));
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('system');
+    media.setDark(true);
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
   });
 });

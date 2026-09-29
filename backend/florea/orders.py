@@ -68,6 +68,54 @@ def get_order(order_id, user_id=None, admin=False):
     return result
 
 
+def checkout_items(user_id, data):
+    if "productId" in data:
+        product = one("SELECT * FROM products WHERE id = %s FOR UPDATE", (data["productId"],))
+        if not product:
+            missing("product")
+        if not product["is_active"]:
+            raise ApiError(409, "PRODUCT_INACTIVE", "This product is no longer available.")
+        if product["stock_quantity"] < data["quantity"]:
+            raise ApiError(
+                409,
+                "INSUFFICIENT_STOCK",
+                "The selected quantity is no longer available. Review the latest stock before trying again.",
+            )
+        if product["price"] != data["expectedUnitPrice"]:
+            raise ApiError(
+                409,
+                "PRICE_CHANGED",
+                "The price changed. Review the updated total before placing your order.",
+            )
+        return [
+            {
+                "product": product,
+                "quantity": data["quantity"],
+                "unit_price": product["price"],
+                "line_total": product["price"] * data["quantity"],
+                "availability": "available",
+            }
+        ]
+
+    # Deterministic product lock order prevents cross-cart deadlocks.
+    rows(
+        """SELECT p.id FROM products p JOIN cart_items ci ON ci.product_id = p.id
+            WHERE ci.user_id = %s ORDER BY p.id FOR UPDATE OF p""",
+        (user_id,),
+    )
+    cart = get_cart(user_id)
+    if not cart["items"]:
+        raise ApiError(409, "EMPTY_CART", "Your cart is empty. Add an item before checking out.")
+    if cart["revision"] != data["cartRevision"]:
+        raise ApiError(
+            409,
+            "CART_CHANGED",
+            "Your cart changed. Review the latest prices and availability before trying again.",
+            {"cart": cart},
+        )
+    return cart["items"]
+
+
 def place_order(user_id, key, data):
     request_fingerprint = fingerprint(data)
     with get_db().transaction():
@@ -84,26 +132,8 @@ def place_order(user_id, key, data):
                     "This checkout key was already used for different order details.",
                 )
             return get_order(existing["id"], user_id), True
-        # Deterministic product lock order prevents cross-cart deadlocks. Locks also
-        # protect the reviewed prices and stock until order creation commits.
-        rows(
-            """SELECT p.id FROM products p JOIN cart_items ci ON ci.product_id = p.id
-                WHERE ci.user_id = %s ORDER BY p.id FOR UPDATE OF p""",
-            (user_id,),
-        )
-        cart = get_cart(user_id)
-        if not cart["items"]:
-            raise ApiError(
-                409, "EMPTY_CART", "Your cart is empty. Add an item before checking out."
-            )
-        if cart["revision"] != data["cartRevision"]:
-            raise ApiError(
-                409,
-                "CART_CHANGED",
-                "Your cart changed. Review the latest prices and availability before trying again.",
-                {"cart": cart},
-            )
-        for item in cart["items"]:
+        items = checkout_items(user_id, data)
+        for item in items:
             if item["availability"] == "inactive":
                 raise ApiError(
                     409,
@@ -119,9 +149,7 @@ def place_order(user_id, key, data):
                     {"productId": item["product"]["id"]},
                 )
         order_id = uuid4()
-        subtotal = sum(
-            (item["unit_price"] * item["quantity"] for item in cart["items"]), Decimal(0)
-        )
+        subtotal = sum((item["unit_price"] * item["quantity"] for item in items), Decimal(0))
         execute(
             """INSERT INTO orders (id, user_id, idempotency_key, request_fingerprint,
                     subtotal, total_amount, payment_method, delivery_address)
@@ -137,7 +165,7 @@ def place_order(user_id, key, data):
                 Jsonb(data["deliveryAddress"]),
             ),
         )
-        for item in cart["items"]:
+        for item in items:
             product = item["product"]
             updated = execute(
                 """UPDATE products SET stock_quantity = stock_quantity - %s,
@@ -165,7 +193,8 @@ def place_order(user_id, key, data):
                     item["line_total"],
                 ),
             )
-        execute("DELETE FROM cart_items WHERE user_id = %s", (user_id,))
+        if "productId" not in data:
+            execute("DELETE FROM cart_items WHERE user_id = %s", (user_id,))
         return get_order(order_id, user_id), False
 
 
@@ -174,6 +203,15 @@ def place_order(user_id, key, data):
 def checkout():
     key = v.identifier(request.headers.get("Idempotency-Key"), "idempotencyKey")
     data = v.checkout_input()
+    order, replayed = place_order(g.user["id"], key, data)
+    return jsonify(data={"order": order, "idempotent_replay": replayed}), 200 if replayed else 201
+
+
+@bp.post("/orders/buy-now")
+@protected("customer")
+def buy_now():
+    key = v.identifier(request.headers.get("Idempotency-Key"), "idempotencyKey")
+    data = v.checkout_input(direct=True)
     order, replayed = place_order(g.user["id"], key, data)
     return jsonify(data={"order": order, "idempotent_replay": replayed}), 200 if replayed else 201
 

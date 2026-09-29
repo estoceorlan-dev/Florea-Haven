@@ -142,9 +142,25 @@ def catalog_input(product=False, update=False):
     return result
 
 
-def checkout_input():
-    data = body({"cartRevision", "paymentMethod", "deliveryAddress"})
-    revision = string(data.get("cartRevision"), "cartRevision", 64, 64, r"[a-f0-9]{64}")
+def checkout_input(direct=False):
+    selection_fields = (
+        {"productId", "quantity", "expectedUnitPrice"} if direct else {"cartRevision"}
+    )
+    data = body(selection_fields | {"paymentMethod", "deliveryAddress"})
+    if direct:
+        selection = {
+            "productId": identifier(data.get("productId"), "productId"),
+            "quantity": number(data.get("quantity"), "quantity", 1, 999, integer=True),
+            "expectedUnitPrice": number(
+                data.get("expectedUnitPrice"), "expectedUnitPrice", 0, 9999999999, money=True
+            ),
+        }
+    else:
+        selection = {
+            "cartRevision": string(
+                data.get("cartRevision"), "cartRevision", 64, 64, r"[a-f0-9]{64}"
+            )
+        }
     payment = choice(data.get("paymentMethod"), "paymentMethod", ["cash_on_delivery"])
     address = data.get("deliveryAddress")
     bounds = {
@@ -172,4 +188,4 @@ def checkout_input():
         address.get("country"), "deliveryAddress.country", ["Philippines"]
     )
     # Field order intentionally matches the old Zod schema for fingerprint compatibility.
-    return {"cartRevision": revision, "paymentMethod": payment, "deliveryAddress": normalized}
+    return {**selection, "paymentMethod": payment, "deliveryAddress": normalized}

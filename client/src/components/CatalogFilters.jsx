@@ -23,10 +23,10 @@ export function CatalogFilters({
   };
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <div>
         <h2 className="filter-heading">Collection</h2>
-        <div className="mt-3 flex flex-col items-start">
+        <div className="mt-3 flex flex-col items-start gap-1">
           <button
             className={`filter-option ${activeCategory === '' ? 'filter-option-active' : ''}`}
             type="button"
@@ -54,10 +54,8 @@ export function CatalogFilters({
               aria-pressed={activeCategory === category.slug}
               onClick={() => onChange({ category: category.slug })}
             >
-              {category.name}{' '}
-              <span className="ml-2 tabular-nums text-text-muted">
-                {category.product_count}
-              </span>
+              <span className="min-w-0 break-words">{category.name}</span>{' '}
+              <span className="filter-count">{category.product_count}</span>
             </button>
           ))}
           {categories.error && (
@@ -74,7 +72,7 @@ export function CatalogFilters({
           )}
         </div>
       </div>
-      <form onSubmit={submitPrice}>
+      <form className="border-t border-border/70 pt-5" onSubmit={submitPrice}>
         <h2 className="filter-heading">Price range</h2>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {[
@@ -108,7 +106,7 @@ export function CatalogFilters({
             {priceError}
           </p>
         )}
-        <button className="button-secondary mt-3 w-full" type="submit">
+        <button className="button-primary mt-4 w-full" type="submit">
           Apply price
         </button>
       </form>

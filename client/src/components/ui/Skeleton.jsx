@@ -5,7 +5,7 @@ export function Skeleton({ className = '' }) {
 export function ProductCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-card border border-border bg-surface shadow-low">
-      <Skeleton className="aspect-[4/5] w-full" />
+      <Skeleton className="m-2 mb-0 aspect-square rounded-[1.1rem]" />
       <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -15,7 +15,10 @@ export function ProductCardSkeleton() {
           <Skeleton className="h-4 w-16 rounded-control" />
         </div>
         <Skeleton className="mt-4 h-7 w-24 rounded-control" />
-        <Skeleton className="mt-3 h-11 w-full rounded-control" />
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_3rem] gap-2">
+          <Skeleton className="h-12 rounded-full" />
+          <Skeleton className="size-12 rounded-full" />
+        </div>
       </div>
     </div>
   );

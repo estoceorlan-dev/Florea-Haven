@@ -61,6 +61,29 @@ function renderAdmin() {
 }
 
 describe('responsive navigation layouts', () => {
+  it('marks only the selected collection as current in both navigation layouts', () => {
+    renderStorefront();
+    const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    fireEvent.click(within(navigation).getByRole('link', { name: 'Seeds' }));
+
+    expect(within(navigation).getByRole('link', { current: 'page' })).toHaveTextContent(
+      'Seeds',
+    );
+    expect(
+      within(navigation).getByRole('link', { name: 'Shop all' }),
+    ).not.toHaveAttribute('aria-current');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    const drawer = screen.getByRole('navigation', { name: 'Store navigation' });
+    expect(within(drawer).getByRole('link', { current: 'page' })).toHaveTextContent(
+      'Seeds',
+    );
+    fireEvent.click(within(drawer).getByRole('link', { name: 'Shop all' }));
+    expect(within(navigation).getByRole('link', { current: 'page' })).toHaveTextContent(
+      'Shop all',
+    );
+  });
+
   it('shows the customer first name and full identity in the mobile drawer', () => {
     renderStorefront();
 

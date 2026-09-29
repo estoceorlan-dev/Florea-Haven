@@ -160,6 +160,10 @@ export const cartApi = {
 };
 
 export const orderApi = {
+  buyNow: (input, idempotencyKey) =>
+    jsonRequest('/api/orders/buy-now', 'POST', input, {
+      'Idempotency-Key': idempotencyKey,
+    }),
   placeOrder: (input, idempotencyKey) =>
     jsonRequest('/api/orders', 'POST', input, {
       'Idempotency-Key': idempotencyKey,

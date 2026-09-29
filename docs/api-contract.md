@@ -211,6 +211,22 @@ Registration and login are limited to 20 attempts per 15-minute window per rate-
 
 The API rejects an empty cart, stale cart revision, inactive product, changed/insufficient stock, or invalid address without partially creating an order. A successful response is `201`, clears the cart, and returns the order with address and item snapshots. Reusing an idempotency key with the same request returns the original order with `200` and `idempotent_replay: true`; reusing it for different input returns `409 IDEMPOTENCY_CONFLICT`.
 
+### Buy now
+
+`POST /api/orders/buy-now` is customer-only and requires the same UUID `Idempotency-Key`, `paymentMethod`, and `deliveryAddress` as cart checkout. Replace `cartRevision` with:
+
+```json
+{
+  "productId": "2c7bc774-f813-4b7a-a874-972d56c113e3",
+  "quantity": 2,
+  "expectedUnitPrice": 1890
+}
+```
+
+The product ID must be a UUID and quantity must be an integer from 1 through 999. The server locks the product and uses its current stored price to calculate the order total. `expectedUnitPrice` records the price reviewed by the customer; a mismatch returns `409 PRICE_CHANGED` and requires a new review. Inactive products and insufficient stock also return `409` without creating an order or changing inventory.
+
+A successful purchase creates an order for only that product and quantity, with the same snapshots, stock deduction, and idempotent replay rules as cart checkout. It does not add, remove, or change cart items; their live stock availability can change after the purchase. The storefront opens a product/quantity review dialog, followed by delivery and Cash on Delivery checkout. Guests return to their selection after signing in.
+
 `GET /api/orders` supports `page` and `limit` using the catalog pagination bounds. `GET /api/orders/:id` returns `404 ORDER_NOT_FOUND` both for a missing order and for an order owned by another customer, avoiding ownership disclosure.
 
 ## Implemented catalog administration rules

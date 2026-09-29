@@ -200,6 +200,7 @@ DELETE /api/cart/items/:id
 
 ```text
 POST   /api/orders
+POST   /api/orders/buy-now
 GET    /api/orders
 GET    /api/orders/:id
 GET    /api/admin/orders

@@ -23,8 +23,8 @@ patterns = [
 ]
 failures = []
 for name in set(paths):
-    if not name or name.startswith(".pptx-build/"):
-        continue  # Existing unrelated user artifact, not application source.
+    if not name:
+        continue
     path = ROOT / name
     if not path.is_file() or path.stat().st_size > 2_000_000:
         continue

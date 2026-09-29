@@ -6,13 +6,14 @@ import { InlineError } from '../components/InlineError.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/ProductGridSkeleton.jsx';
 import { NavigationDrawer } from '../components/ui/NavigationDrawer.jsx';
+import { SortSelect } from '../components/ui/SortSelect.jsx';
 import { useCategoriesQuery } from '../queries/useCategoriesQuery.js';
 import { useProductsQuery } from '../queries/useProductsQuery.js';
 import { formatCurrency } from '../utils/currency.js';
 
 const sortOptions = [
   ['featured', 'Featured'],
-  ['newest', 'Newest'],
+  ['newest', 'Newest arrivals'],
   ['price-asc', 'Price: low to high'],
   ['price-desc', 'Price: high to low'],
   ['name-asc', 'Name: A–Z'],
@@ -80,13 +81,13 @@ export function ProductsPage() {
 
   return (
     <div>
-      <section className="border-b border-border bg-surface-muted">
-        <div className="page-shell py-12 text-center sm:py-16">
+      <section className="mx-3 mt-4 rounded-[2rem] border border-border/70 bg-linear-to-br from-brand-soft via-surface-muted to-canvas sm:mx-6 sm:mt-6 lg:mx-10">
+        <div className="page-shell animate-reveal py-6 text-center sm:py-8">
           <p className="eyebrow text-clay">Bring the garden closer</p>
-          <h1 className="mt-3 font-display text-5xl tracking-[-0.055em] text-evergreen sm:text-7xl">
+          <h1 className="mt-2 font-display text-5xl tracking-[-0.055em] text-evergreen sm:text-7xl">
             {activeCategory ? categoryName : 'The collection'}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-text-muted sm:text-base">
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-text-muted sm:text-base">
             Flowers for now, seeds for later, and botanical fragrance to keep the
             feeling with you.
           </p>
@@ -94,7 +95,7 @@ export function ProductsPage() {
       </section>
       <div className="page-shell py-8 md:py-12">
         <form
-          className="mb-6 flex items-center gap-3 rounded-control border border-border bg-surface p-2 pl-4"
+          className="mb-6 flex items-center gap-2 rounded-[1.75rem] border border-border bg-surface p-2 pl-4 shadow-low focus-within:border-brand sm:gap-3 sm:pl-5"
           role="search"
           aria-label="Search the collection"
           onSubmit={(event) => {
@@ -108,14 +109,14 @@ export function ProductsPage() {
           </label>
           <input
             id="catalog-search"
-            className="min-h-11 min-w-0 flex-1 bg-transparent text-sm"
+            className="min-h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
             type="search"
             maxLength={100}
             placeholder="Search the collection"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
           />
-          <button className="button-secondary shrink-0" type="submit">
+          <button className="button-primary shrink-0 px-4 sm:px-6" type="submit">
             Search
           </button>
         </form>
@@ -144,21 +145,11 @@ export function ProductsPage() {
                   : 'Gathering pieces…'}
             </p>
           </div>
-          <label className="flex min-w-0 items-center gap-2 text-sm text-text-muted">
-            Sort
-            <select
-              className="min-h-11 min-w-0 rounded-control border border-border bg-surface px-2 text-sm text-text"
-              value={requestParams.sort ?? 'featured'}
-              onChange={(event) => updateParams({ sort: event.target.value })}
-              aria-label="Sort products"
-            >
-              {sortOptions.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SortSelect
+            options={sortOptions}
+            value={requestParams.sort ?? 'featured'}
+            onChange={(sort) => updateParams({ sort })}
+          />
         </div>
         {appliedFilters.length > 0 && (
           <div
@@ -186,8 +177,11 @@ export function ProductsPage() {
             </button>
           </div>
         )}
-        <div className="grid gap-8 md:grid-cols-[190px_minmax(0,1fr)] lg:gap-12">
-          <aside className="hidden md:block" aria-label="Catalog filters">
+        <div className="grid items-start gap-6 md:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-8">
+          <aside
+            className="sticky top-28 hidden rounded-card border border-border bg-surface p-4 shadow-low md:block xl:top-32 xl:p-5"
+            aria-label="Catalog filters"
+          >
             {filterPanel}
           </aside>
           <section className="min-w-0" aria-label="Products">

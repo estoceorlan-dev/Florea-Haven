@@ -1,7 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../utils/currency.js';
-import { AddToCartButton } from './AddToCartButton.jsx';
+import { ProductPurchaseActions } from './ProductPurchaseActions.jsx';
 import { ProductImage } from './ProductImage.jsx';
 import { StockIndicator } from './ui/StockIndicator.jsx';
 
@@ -9,12 +9,12 @@ export function ProductCard({ product, isUpdating = false }) {
   return (
     <article className="product-card group">
       <Link
-        className="relative block aspect-[4/5] overflow-hidden bg-brand-soft"
+        className="relative m-2 mb-0 block aspect-square overflow-hidden rounded-[1.1rem] bg-brand-soft"
         to={`/products/${product.id}`}
         aria-label={`View ${product.name}`}
       >
         <ProductImage
-          className="size-full object-cover transition duration-300 ease-out group-hover:scale-[1.035] group-focus-within:scale-[1.035]"
+          className="size-full object-cover transition duration-500 ease-out motion-safe:group-hover:scale-[1.035] motion-safe:group-focus-within:scale-[1.035]"
           src={product.image_url}
           alt={product.name}
         />
@@ -27,33 +27,29 @@ export function ProductCard({ product, isUpdating = false }) {
           <ArrowUpRight size={17} aria-hidden="true" />
         </span>
       </Link>
-      <div className="flex flex-1 flex-col p-4">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-          <div className="min-w-0 flex-1 basis-28 break-words">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div className="min-w-0">
+          <div className="min-w-0 break-words">
             <p className="text-[0.64rem] font-bold uppercase tracking-[0.17em] text-clay">
               {product.category.name}
             </p>
-            <h3 className="mt-1 font-display text-xl leading-tight tracking-[-0.025em] sm:text-[1.35rem]">
+            <h3 className="mt-2 font-display text-xl leading-snug tracking-[-0.025em] sm:text-[1.35rem]">
               <Link className="hover:text-evergreen" to={`/products/${product.id}`}>
                 {product.name}
               </Link>
             </h3>
           </div>
-          <p className="shrink-0 text-sm font-semibold text-evergreen">
+          <p className="mt-3 text-lg font-semibold tracking-tight text-brand-strong">
             {formatCurrency(product.price)}
           </p>
         </div>
         <StockIndicator
-          className="mb-3 mt-4 self-start"
+          className="mb-5 mt-3 self-start"
           stockQuantity={product.stock_quantity}
           isUpdating={isUpdating}
         />
-        <div className="mt-auto">
-          <AddToCartButton
-            product={product}
-            compact
-            className="button-secondary w-full"
-          />
+        <div className="mt-auto border-t border-border/70 pt-4">
+          <ProductPurchaseActions product={product} />
         </div>
       </div>
     </article>

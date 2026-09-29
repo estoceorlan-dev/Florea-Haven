@@ -16,5 +16,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .postgres-test/
+.pptx-build/
+.codex-finalizer/
 test-results/
 playwright-report/

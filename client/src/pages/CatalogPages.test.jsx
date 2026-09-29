@@ -146,7 +146,9 @@ describe('catalog pages', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Add' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: `Add ${product.name} to cart` }),
+    );
     expect(await screen.findByRole('button', { name: 'Out of stock' })).toBeDisabled();
     expect(screen.getByRole('alert')).toHaveTextContent(
       'This piece has just sold out.',
@@ -209,7 +211,7 @@ describe('catalog pages', () => {
       expect(await screen.findByText('6 in stock')).toBeInTheDocument();
       expect(
         screen.getByRole('button', {
-          name: path === '/products' ? 'Add' : 'Add to cart',
+          name: 'Buy now',
         }),
       ).toBeEnabled();
     },

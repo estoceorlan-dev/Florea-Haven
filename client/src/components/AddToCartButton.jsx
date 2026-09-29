@@ -1,4 +1,4 @@
-import { Check, Plus, ShoppingBag } from 'lucide-react';
+import { Check, LoaderCircle, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
@@ -8,6 +8,7 @@ export function AddToCartButton({
   product,
   className = 'button-secondary',
   compact = false,
+  iconOnly = false,
 }) {
   const { user } = useAuth();
   const { addItem } = useCart();
@@ -17,7 +18,9 @@ export function AddToCartButton({
   const [error, setError] = useState(null);
   const isStockUnknown =
     product.stock_quantity == null || !Number.isFinite(Number(product.stock_quantity));
-  const isOutOfStock = !isStockUnknown && Number(product.stock_quantity) < 1;
+  const isOutOfStock =
+    product.is_active === false ||
+    (!isStockUnknown && Number(product.stock_quantity) < 1);
 
   const add = async () => {
     if (isStockUnknown || isOutOfStock || status === 'adding') return;
@@ -53,24 +56,41 @@ export function AddToCartButton({
             : 'Add to cart';
 
   return (
-    <div>
+    <div className={iconOnly ? 'contents' : undefined}>
       <button
         className={className}
         type="button"
         disabled={isStockUnknown || isOutOfStock || status === 'adding'}
         onClick={add}
+        aria-label={iconOnly ? `Add ${product.name} to cart` : undefined}
+        title={iconOnly ? label : undefined}
+        aria-busy={status === 'adding'}
       >
-        {status === 'added' ? (
+        {status === 'adding' ? (
+          <LoaderCircle
+            className="motion-safe:animate-spin"
+            size={18}
+            aria-hidden="true"
+          />
+        ) : status === 'added' ? (
           <Check size={15} aria-hidden="true" />
+        ) : iconOnly ? (
+          <span className="relative inline-flex" aria-hidden="true">
+            <ShoppingCart size={20} />
+            <Plus className="absolute -right-1 -top-1" size={10} strokeWidth={3} />
+          </span>
         ) : compact ? (
           <Plus size={15} aria-hidden="true" />
         ) : (
           <ShoppingBag size={15} aria-hidden="true" />
         )}
-        {label}
+        {!iconOnly && label}
       </button>
       {error && (
-        <p className="mt-2 text-xs leading-5 text-clay" role="alert">
+        <p
+          className={`mt-2 text-xs leading-5 text-clay ${iconOnly ? 'col-span-2' : ''}`}
+          role="alert"
+        >
           {error}
         </p>
       )}

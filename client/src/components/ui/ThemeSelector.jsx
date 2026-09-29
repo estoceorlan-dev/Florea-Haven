@@ -1,8 +1,19 @@
-import { Palette } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import { useId } from 'react';
 import { useTheme } from '../../hooks/useTheme.js';
+import { SelectMenu } from './SelectMenu.jsx';
 
-export function ThemeSelector({ className = '', compact = false }) {
+const themeOptions = [
+  ['system', 'System default', Monitor],
+  ['light', 'Light', Sun],
+  ['dark', 'Dark', Moon],
+];
+
+export function ThemeSelector({
+  className = '',
+  compact = false,
+  placement = 'bottom',
+}) {
   const id = useId();
   const { preference, resolvedTheme, setPreference } = useTheme();
 
@@ -13,19 +24,17 @@ export function ThemeSelector({ className = '', compact = false }) {
       <label className="theme-selector-label" htmlFor={id}>
         Appearance
       </label>
-      <div className="theme-selector-control">
-        <Palette size={16} aria-hidden="true" />
-        <select
-          id={id}
-          value={preference}
-          onChange={(event) => setPreference(event.target.value)}
-          aria-describedby={`${id}-status`}
-        >
-          <option value="system">Use system setting</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </div>
+      <SelectMenu
+        id={id}
+        label="Appearance"
+        options={themeOptions}
+        value={preference}
+        onChange={setPreference}
+        icon={themeOptions.find(([key]) => key === preference)?.[2] ?? Monitor}
+        describedBy={`${id}-status`}
+        placement={placement}
+        fullWidth
+      />
       <span className="sr-only" id={`${id}-status`} aria-live="polite">
         {resolvedTheme} theme active
       </span>

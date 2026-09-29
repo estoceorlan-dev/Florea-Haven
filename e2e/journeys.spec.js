@@ -41,7 +41,7 @@ test('customer purchase, profile image, admin inventory and fulfillment', async 
     .getByRole('link', { name: /Blush Garden Bouquet/ })
     .first()
     .click();
-  await page.getByRole('button', { name: /Add to cart/i }).click();
+  await page.getByRole('button', { name: /^Add .+ to cart$/i }).click();
   await page.goto('/cart');
   await expect(page.getByText('Blush Garden Bouquet').first()).toBeVisible();
   await page.getByRole('link', { name: /checkout/i }).click();

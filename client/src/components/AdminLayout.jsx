@@ -101,7 +101,7 @@ export function AdminLayout() {
           <AdminNavigation />
 
           <div className="mt-auto space-y-5 border-t border-border px-2 pt-5">
-            <ThemeSelector />
+            <ThemeSelector placement="top" />
             <div className="flex items-center gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
                 <UserRound size={18} aria-hidden="true" />
@@ -204,7 +204,7 @@ export function AdminLayout() {
         </div>
 
         <div className="mt-auto space-y-5 border-t border-border px-5 py-6">
-          <ThemeSelector />
+          <ThemeSelector placement="top" />
           <button
             className="drawer-action-link w-full border border-border"
             type="button"

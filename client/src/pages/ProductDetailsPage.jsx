@@ -1,7 +1,7 @@
 import { ArrowLeft, Leaf, PackageCheck, ShieldCheck } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { InlineError } from '../components/InlineError.jsx';
-import { AddToCartButton } from '../components/AddToCartButton.jsx';
+import { ProductPurchaseActions } from '../components/ProductPurchaseActions.jsx';
 import { ProductImage } from '../components/ProductImage.jsx';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
 import { StockIndicator } from '../components/ui/StockIndicator.jsx';
@@ -10,6 +10,7 @@ import { formatCurrency } from '../utils/currency.js';
 
 export function ProductDetailsPage() {
   const { productId } = useParams();
+  const [searchParams] = useSearchParams();
   const product = useProductQuery(productId);
 
   if (product.isPending) {
@@ -110,14 +111,14 @@ export function ProductDetailsPage() {
             )}
 
             <div className="mt-9 rounded-card border border-border bg-surface p-5">
-              <AddToCartButton
+              <ProductPurchaseActions
                 key={item.id}
                 product={item}
-                className="button-primary w-full"
+                initialOpen={searchParams.get('buy') === '1'}
+                initialQuantity={searchParams.get('quantity') ?? 1}
               />
-              <p className="mt-3 text-center text-xs leading-5 text-ink/50">
-                Your cart is saved to your account. Availability is confirmed at
-                checkout.
+              <p className="mt-3 text-center text-xs leading-5 text-text-muted">
+                Buy this piece now, or save it to your cart for later.
               </p>
             </div>
 
