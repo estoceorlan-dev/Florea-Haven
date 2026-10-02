@@ -1,0 +1,3 @@
+ALTER TABLE users
+  ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0 CHECK (session_version >= 0);

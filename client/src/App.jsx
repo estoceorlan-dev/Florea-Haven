@@ -8,6 +8,7 @@ import { AdminHomePage } from './pages/AdminHomePage.jsx';
 import { AdminOrderDetailPage } from './pages/AdminOrderDetailPage.jsx';
 import { AdminOrdersPage } from './pages/AdminOrdersPage.jsx';
 import { AdminProductsPage } from './pages/AdminProductsPage.jsx';
+import { AdminUsersPage } from './pages/AdminUsersPage.jsx';
 import { CartPage } from './pages/CartPage.jsx';
 import { CheckoutPage } from './pages/CheckoutPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
         </Route>
       </Route>
     </Routes>

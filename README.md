@@ -2,7 +2,7 @@
 
 Floréa Haven is a storefront for seeds, flowers, and botanical perfumes. **React + Tailwind provide the interface; Python Flask provides the entire backend; PostgreSQL stores the data.**
 
-Implemented features include the public catalog, cookie authentication, persistent carts, Cash on Delivery checkout, customer order history, administrator catalog, inventory, and order management, and managed profile/product image uploads.
+Implemented features include the public catalog, cookie authentication, persistent carts, Cash on Delivery checkout, customer order history, administrator catalog, inventory, order and user management, and managed profile/product image uploads.
 
 ## Requirements
 
@@ -43,6 +43,12 @@ npm run admin:create
 ```
 
 This creates the administrator or updates the name, password, and role of the account with that email. It does not print credentials. Run migrations first.
+
+## User management
+
+Open **Admin → Users** (`/admin/users`) to search accounts by name or email, filter by role/status, create customers or administrators, edit names/emails/roles, and deactivate or reactivate accounts. Deactivation preserves carts and order history, blocks login, and permanently revokes existing sessions. Reactivated users must sign in again. Administrators cannot demote or deactivate their own account; concurrent changes also preserve administrator access.
+
+Apply migration `007_user_management.sql` with `npm run db:migrate` before starting the updated app. Existing accounts remain active and existing sessions remain compatible until the account is deactivated.
 
 ## Commands
 

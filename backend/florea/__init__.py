@@ -172,10 +172,10 @@ def create_app(config=None):
             }
         ), 500
 
-    from . import auth, cart, catalog, images, orders
+    from . import auth, cart, catalog, images, orders, users
 
     auth.limiter.init_app(app)
-    for blueprint in (auth.bp, catalog.bp, cart.bp, orders.bp, images.bp):
+    for blueprint in (auth.bp, catalog.bp, cart.bp, orders.bp, images.bp, users.bp):
         app.register_blueprint(blueprint)
 
     @app.get("/api/health")

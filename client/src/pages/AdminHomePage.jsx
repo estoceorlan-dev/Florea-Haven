@@ -5,11 +5,19 @@ import {
   ShieldCheck,
   Store,
   Tags,
+  Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 
 const tools = [
+  {
+    title: 'User management',
+    description: 'Manage customer accounts, administrator roles, and account access.',
+    to: '/admin/users',
+    label: 'Manage users',
+    icon: Users,
+  },
   {
     title: 'Customer orders',
     description: 'Review delivery details and progress new orders through fulfillment.',
@@ -70,7 +78,7 @@ export function AdminHomePage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {tools.map(({ title, description, to, label, icon: Icon }, index) => (
           <Link
             key={to}

@@ -61,8 +61,13 @@ def protected(role=None):
                 user_id = UUID(payload["sub"])
             except (jwt.InvalidTokenError, ValueError, TypeError, KeyError):
                 raise failure from None
-            g.user = one(f"SELECT {USER_COLUMNS} FROM users WHERE id = %s", (user_id,))
-            if not g.user:
+            g.user = one(
+                f"SELECT {USER_COLUMNS}, is_active, session_version FROM users WHERE id = %s",
+                (user_id,),
+            )
+            if not g.user or not g.user.pop("is_active"):
+                raise failure
+            if payload.get("version", 0) != g.user.pop("session_version"):
                 raise failure
             if role and g.user["role"] != role:
                 label = "Administrator" if role == "admin" else "Customer"
@@ -86,11 +91,15 @@ def cookie_options():
 
 
 def session_response(user, status=200):
+    user = dict(user)
+    version = user.pop("session_version", 0)
+    user.pop("is_active", None)
     now = datetime.now(timezone.utc)
     days = current_app.config["SESSION_DAYS"]
     token = jwt.encode(
         {
             "role": user["role"],
+            "version": version,
             "sub": str(user["id"]),
             "iat": now,
             "exp": now + timedelta(days=days),
@@ -130,11 +139,13 @@ def register():
 def login():
     data = credentials()
     user = one(
-        f"SELECT {USER_COLUMNS}, password_hash FROM users WHERE email = %s", (data["email"],)
+        f"SELECT {USER_COLUMNS}, password_hash, is_active, session_version "
+        "FROM users WHERE email = %s",
+        (data["email"],),
     )
     password_hash = user.pop("password_hash") if user else DUMMY_HASH.decode("ascii")
     valid = check_password(data["password"], password_hash)
-    if not user or not valid:
+    if not user or not valid or not user["is_active"]:
         raise ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password.")
     return session_response(user)
 

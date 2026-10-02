@@ -7,6 +7,7 @@ import {
   Store,
   Tags,
   UserRound,
+  Users,
 } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -20,6 +21,7 @@ const navigation = [
   { label: 'Orders', to: '/admin/orders', icon: ClipboardList },
   { label: 'Products', to: '/admin/products', icon: Package },
   { label: 'Categories', to: '/admin/categories', icon: Tags },
+  { label: 'Users', to: '/admin/users', icon: Users },
   { label: 'Floréa Haven', to: '/', icon: Store, end: true },
 ];
 

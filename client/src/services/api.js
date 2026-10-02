@@ -94,6 +94,13 @@ export const adminOrderApi = {
     jsonRequest(`/api/admin/orders/${id}/status`, 'PUT', { status }),
 };
 
+export const adminUserApi = {
+  getUsers: (params = {}, options = {}) =>
+    request(`/api/admin/users${toQueryString(params)}`, options),
+  createUser: (input) => jsonRequest('/api/admin/users', 'POST', input),
+  updateUser: (id, input) => jsonRequest(`/api/admin/users/${id}`, 'PUT', input),
+};
+
 export const authApi = {
   register: (input) => jsonRequest('/api/auth/register', 'POST', input),
   login: (input) => jsonRequest('/api/auth/login', 'POST', input),
